@@ -34,6 +34,7 @@ Updated on 15/11/2026. Model: `/home/berg/Desktop/Sistema Gestão Orçamentária
 3. **Execute** (`/etapa`): read only the spec and what it points to; when finished: tests, version, history, Status, commit, stage checked.
 4. **End of the improvement:** rules to `docs/regras/`, the line leaves `melhorias-futuras.md`, spec to `specs/feitas/`. Small fixes do not need a spec.
 - New ideas: one line in `melhorias-futuras.md`. New permanent instruction: propose putting it in the project's `CLAUDE.md`.
+- (15/11/2026) **Never assume what can be asked.** Any doubt about the user's setup, equipment, network, firewall, which device runs what, or preferences: ask first (choice window) and wait for the answer before coding. Assume only when the user expressly says so or says they will be away for a while (then follow "When the user leaves").
 - **When the user leaves** and asks to continue: do what is already decided, plan the rest and bring the questions in blocks at the end, with suggestions.
 
 ## Chat messages (short)
