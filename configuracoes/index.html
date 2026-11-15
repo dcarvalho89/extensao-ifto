@@ -81,6 +81,12 @@
       <div class="aviso sucesso" id="sicafPermitido" hidden>Acesso ao Compras.gov.br e ao Simples Nacional permitido.</div>
     </section>
     <div class="aviso sucesso" id="gravado" hidden>Configuração gravada.</div>
+    <!-- v0.18.3: dicas pedidas no teste T26 (senha do SEI no Firefox e compactar PDF). -->
+    <section class="cartao">
+      <h1>Dicas</h1>
+      <p class="apoio"><strong>Só a senha do SEI na assinatura (Firefox):</strong> o Firefox oferece no SEI as senhas guardadas de qualquer site do IFTO (SUAP, Moodle etc.). Para ele oferecer só a do SEI: digite <code>about:config</code> na barra de endereço e tecle Enter; clique em "Aceitar o risco e continuar"; na busca, digite <code>signon.includeOtherSubdomainsInLookup</code>; clique no botão ⇄ à direita até o valor ficar <code>false</code>. Com uma senha só, o Firefox já a preenche na assinatura.</p>
+      <p class="apoio"><strong>PDF grande demais para o SEI:</strong> o SEI só aceita arquivos de até 10 MB. Para diminuir o PDF, use o <a href="https://www.ilovepdf.com/pt/comprimir_pdf" target="_blank" rel="noopener">ilovepdf.com</a> (mais rápido e fácil) ou o <a href="https://tools.pdf24.org/pt/comprimir-pdf" target="_blank" rel="noopener">pdf24.org</a> (diminui bem mais o arquivo, quando o primeiro não resolve).</p>
+    </section>
     <!-- v0.9.4: onde informar erros e pedir melhorias (o mesmo texto do README). -->
     <section class="cartao">
       <h1>Erros e sugestões de melhoria</h1>

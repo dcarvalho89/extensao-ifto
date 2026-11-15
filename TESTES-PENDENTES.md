@@ -35,8 +35,6 @@ E: Comente quais entraram e a mensagem do recusado. B recusado = 10 MB; B aceito
 ?: Que tipos de arquivo além de PDF passam do limite (planilha, imagem, vídeo, .zip…)? O que fazem hoje: .zip, dividir, converter para PDF?
 ### P2 – Dica de compactação abaixo do limite
 ?: Sugerir compactar também abaixo de 10 MB? A partir de que tamanho? Só sugere ou pergunta antes de enviar?
-### P3 – Restritos ou sigilosos em sites de compactação
-?: Mostrar a dica do pdf24.org e do ilovepdf (que recebem o arquivo) também para documentos restritos ou sigilosos, ou sugerir um programa no computador? O setor usa Windows ou Linux?
 ### P4 – Dicas do pdf24.org
 ?: Que opção de compressão usam no pdf24.org quando o ilovepdf não resolve? Que tipo de PDF dá problema (digitalizado, muitas imagens, gerado por sistema)?
 
@@ -44,17 +42,10 @@ E: Comente quais entraram e a mensagem do recusado. B recusado = 10 MB; B aceito
 ### T08 – Senha na tela de entrada do SEI (v0.1.1)
 F: Saia do SEI, entre de novo com usuário e senha e salve a senha quando o Firefox perguntar. Saia e abra a tela de entrada outra vez.
 E: A senha aparece como ●. Na segunda vez o Firefox preenche ou oferece a senha guardada.
-### T09 – Senha na assinatura de documento (v0.1.1) (Crítico)
-F: Abra um documento seu > Assinar documento > clique em Senha; escolha a senha guardada ou digite, aperte Enter e salve se o Firefox perguntar. Assine um segundo documento.
-E: Enter e Assinar funcionam como antes; no segundo documento não é preciso digitar. Comente se o Firefox oferecer salvar com o seu nome completo.
 ### T10 – Desligar a correção da senha (v0.1.1)
 F: Configurações > desmarque "Navegador reconhece o campo de senha", recarregue a entrada do SEI e clique em Senha. Marque de novo.
 E: Desmarcada, o Firefox não oferece a senha; marcada, oferece.
 
-## Instalação e atualização pelo GitHub (v0.1.2 e v0.1.3)
-### T11 – Instalar pelo GitHub (v0.1.2)
-F: Depois de "Assinar extensão" ficar verde (aba Actions), no Firefox do trabalho abra Releases > extensao-ifto-X.Y.Z.xpi > Adicionar. Feche e abra o Firefox.
-E: A extensão continua instalada; a janela do ícone mostra a versão.
 ## Lista de assinaturas no SEI (v0.2.0 a v0.4.0)
 > Instale a versão nova e entre no SEI com a unidade PAL/REI/IFTO (Direção-geral).
 ### T13 – Colar a lista e abrir os itens (v0.2.0)
@@ -66,33 +57,15 @@ E: A linha errada aparece em vermelho; dá para corrigir ou "Começar só com as
 ### T15 – Mover o painel e guardar a lista (v0.2.0)
 F: Arraste o painel pela barra de cima, vá até o item 3, feche o Firefox, abra de novo e entre no SEI. Depois clique em "Lugar padrão".
 E: O painel volta no lugar em que você o deixou e no item 3; "Lugar padrão" o devolve ao canto direito.
-### T16 – Outra unidade (v0.2.0)
-F: Com a lista colada, troque para outra unidade no SEI e depois volte para PAL/REI/IFTO.
-E: Na outra unidade o painel some; ao voltar, reaparece no mesmo item.
-### T17 – Feito e lista completa (v0.3.0)
-F: Com a lista colada, clique em "Marcar feito e ir ao próximo" (link do painel) em dois itens, depois em "Lista completa" e num item qualquer da lista.
-E: O contador mostra "3/28 · 2 feitos"; na lista, os feitos têm ✓ e o clique abre o item escolhido.
 ### T18 – Ciência, minimizar e atalhos (v0.3.0)
 F: Vá a um item com "dar ciência", clique em "–" (minimizar) e depois em "▢"; com o documento aberto, aperte Alt+→ e Alt+←.
 E: O item de ciência aparece em azul com "Só dar ciência"; minimizado, sobra uma barrinha com o contador; os atalhos passam para o próximo e voltam.
 ### T19 – Opção nas configurações (v0.3.0)
 F: Configurações > Lista de assinaturas no SEI: escolha "Desligada", recarregue o SEI; depois "Sempre ligada" e troque para outra unidade; feche e abra o Firefox e veja a escolha.
 E: Desligada, o painel some; "Sempre ligada", aparece em qualquer unidade; a escolha continua marcada depois de reabrir o Firefox.
-### T20 – Botões do painel conforme o item (v0.4.0; v0.5.0)
-F: Passe por um item com documento, um de "dar ciência" e um só com o processo.
-E: Com documento: "Assinar e próximo"; de ciência: "Dar ciência e próximo"; só processo: "✓ Feito e próximo".
-### T23 – Assinar e próximo (v0.5.0) (Crítico)
-F: Com a senha do SEI guardada no Firefox, num item com documento clique em "Assinar e próximo" e espere.
-E: A janela de assinatura abre, a senha aparece preenchida, o documento é assinado sozinho e o painel abre o próximo item com o anterior marcado ✓. Se a senha não vier preenchida, digite e aperte Enter: depois de assinar, avança. Comente se não avançar.
-### T24 – Senha errada ou janela fechada (v0.5.0)
-F: Clique em "Assinar e próximo", digite uma senha errada; depois feche a janela de assinatura.
-E: O painel não avança e mostra "Aguardando a assinatura…"; "Cancelar a espera" volta ao normal.
 ### T25 – Dar ciência e próximo (v0.5.0)
 F: Num item de "dar ciência", clique em "Dar ciência e próximo" e confirme no OK do SEI.
 E: A ciência é registrada e o painel abre o próximo item, com o anterior marcado ✓.
-### T26 – Só a senha do SEI (v0.5.0)
-F: Siga "Saved passwords in the SEI" em docs/publicacao.md (about:config > signon.includeOtherSubdomainsInLookup = false) e abra a assinatura de um documento.
-E: O Firefox oferece só a senha do sei.ifto.edu.br (sem SUAP, Moodle etc.).
 ### T27 – Instalar no Chrome (v0.5.0)
 > No computador de desenvolvimento (ou com o .zip da Release, depois do git push).
 F: Rode npm run empacotar-chrome, abra chrome://extensions > Modo do desenvolvedor > Carregar sem compactação > pasta web-ext-artifacts/chrome/extensao-ifto-chrome-0.5.0; entre no SEI na unidade PAL/REI/IFTO.
@@ -228,25 +201,13 @@ E: O botão "Buscar SICAF" não aparece; o menu abre uma janela dizendo para esc
 F: Abra o arquivo "exemplo-ConsultaOptantes_14159957000190_2026-11-13.pdf" e procure (Ctrl+F) "14.159.957/0001-90" e "optante".
 E: O PDF mostra os mesmos dados da página do Simples Nacional (com acentos) e a linha "Consulta feita em …"; a busca encontra o CNPJ e a palavra.
 
-## Janela do ícone: página da versão (v0.17.1)
-### T66 – Procurar atualização (v0.17.2)
-F: Clique no ícone da extensão e em "Procurar atualização".
-E: Aparece "Você já tem a versão mais nova" ou, se houver versão nova, "Versão X disponível" e o botão "Abrir a página da versão X", que abre a página com o arquivo .xpi (Firefox) e .zip (Chrome).
-
 ## Consulta do Simples Nacional no site (v0.17.2)
 > Nas configurações, clique de novo em "Permitir acesso ao Compras.gov.br e ao Simples Nacional" e confirme.
 ### T68 – Consulta com SICAF já buscado hoje (v0.17.2)
 F: Repita o "Buscar" no mesmo processo no mesmo dia.
 E: Não abre o SICAF nem o Simples Nacional de novo (os PDFs de hoje já servem).
-### T69 – Configurações mais largas (v0.17.2)
-F: Clique no ícone da extensão e em "Configurações".
-E: A página ocupa mais a largura da tela que antes, sem textos cortados.
-
 ## SICAF: correções depois do primeiro teste (v0.17.3)
 > Na CGOC, num processo com nota sem SICAF (ex.: 23236.023830/2025-11). Antes, saia do Compras.gov.br (ou use outro navegador) para testar o login.
-### T70 – Janela da nota não bloqueia o SEI (v0.17.3)
-F: Clique em "1 nota sem SICAF – Buscar"; com a janela aberta, clique em "Ver a nota", depois num documento da árvore; arraste a janela pelo título e clique em "–".
-E: A nota e o documento abrem ao lado da árvore com a janela aberta; a janela muda de lugar e o "–" a recolhe até só o título (clique de novo para abrir).
 ### T71 – Nota da HM lida pelo texto (v0.17.3)
 F: No processo 23236.023830/2025-11, clique em "1 nota sem SICAF – Buscar".
 E: A nota 3626 mostra o CNPJ 14.159.957/0006-02 tirado da nota, sem o aviso de "imagem". Se aparecer "Não consegui ler a nota", comente.
@@ -272,9 +233,6 @@ E: o título mostra só "CNPJ – NOME DA EMPRESA" (sem "Relatórios" nem texto 
 ### T77 – Janela do ícone sem a mensagem do SEI reconhecido (v0.17.6)
 F: abra o SEI do IFTO e depois clique no ícone da extensão.
 E: não aparece mais "SEI do IFTO reconhecido"; só aparece aviso amarelo se o SEI tiver um problema (com o motivo).
-
-## Um botão só para SICAF, Simples Nacional e Anexo (v0.18.0)
-> antes de testar: Configurações > "SICAF e Simples Nacional" em "Automática"; unidade CGOC no SEI.
 
 ### T78 – Botão único na CGOC (v0.18.0)
 F: abra um processo de pagamento com nota fiscal depois da última Folha de Encaminhamento, sem Sicaf nem Consulta.
@@ -307,3 +265,6 @@ E: Nas duas vezes o SICAF e o Simples Nacional abrem e buscam de novo; o nome do
 ### T85 – Não incluir de novo o Sicaf e a Consulta que já estão no processo (v0.18.2)
 F: Num processo onde a extensão já incluiu o Sicaf e a Consulta da nota, recarregue a página (F5); depois selecione o CNPJ do fornecedor e clique em "Incluir SICAF, Simples e Anexo".
 E: Depois do F5, o botão "notas sem SICAF ou Simples" não aparece para essa nota; com o CNPJ selecionado, os sites não abrem e a janela diz que o Sicaf e a Consulta já estão no processo e não serão incluídos de novo.
+### T86 – Dicas nas configurações (v0.18.3)
+F: Clique no ícone da extensão > Configurações e desça até o quadro "Dicas".
+E: Aparecem a dica de deixar só a senha do SEI no Firefox e a de diminuir PDF com links para o ilovepdf.com e o pdf24.org (abrem em outra aba).

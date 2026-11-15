@@ -46,8 +46,8 @@ Claude does not code while there is a `[ ]` that affects the stage. The user mar
   - Answer:
 - [ ] D12 – Compression tip also **below** the limit (to save space on the Rectorate server): from what size? Question P2. Affects stages 2 and 3.
   - Answer:
-- [ ] D13 – pdf24.org and ilovepdf receive the file on their servers. Does the tip apply to **restricted or confidential** documents? Question P3. Affects stages 2 and 3.
-  - Answer:
+- [x] D13 – pdf24.org and ilovepdf receive the file on their servers. Does the tip apply to **restricted or confidential** documents? Question P3. Affects stages 2 and 3.
+  - Answer (15/11/2026): yes, show the tip for both sites in every case. pdf24.org compresses much more; ilovepdf.com is much faster and easier. Both tips are also in the settings page ("Dicas", v0.18.3).
 
 ## 4. Decided rules
 

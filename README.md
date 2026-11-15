@@ -108,6 +108,11 @@ Cada função abaixo tem três opções: **Automática** (liga só na unidade in
 - **Documentos do pagamento:** automática na CGOC (CGOC/GAC/DAP/PAL/REI/IFTO).
 - **SICAF e Simples Nacional:** "Automática" para o pagamento de notas fiscais na CGOC; "Sempre ligada" (equipe de licitação) mostra só o botão "Incluir SICAF", em qualquer unidade; "Desligada" tira tudo. Na primeira vez, clique em **Permitir acesso ao Compras.gov.br e ao Simples Nacional**: o navegador pede permissão para a extensão abrir esses dois sites e salvar os PDFs na pasta Downloads (só quem usa o SICAF precisa permitir).
 
+**Dicas**
+
+- **Só a senha do SEI na assinatura (Firefox):** como fazer o Firefox oferecer no SEI só a senha do SEI, e não as do SUAP, Moodle etc.
+- **PDF grande demais para o SEI** (limite de 10 MB): sites para diminuir o PDF, o ilovepdf.com (mais rápido) e o pdf24.org (diminui mais).
+
 ## Quais dados a extensão lê e guarda
 
 - **O que lê:** somente as páginas do SEI abertas no navegador (unidade atual, árvore do processo, números dos documentos e versão do SEI), para saber onde colocar os botões e qual documento abrir. Para o SICAF, lê também o texto dos atestes e dos PDFs das notas fiscais e do SICAF do processo aberto, a página do SICAF no Compras.gov.br e o resultado da consulta do Simples Nacional (só depois da permissão e do clique em "Buscar").
