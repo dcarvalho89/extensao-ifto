@@ -61,6 +61,7 @@ Updated on 15/11/2026. Model: `/home/berg/Desktop/Sistema Gestão Orçamentária
 - (13/11/2026) **Share until pushed:** while nothing was sent to GitHub, small changes of the same round (fixes, style, adjustments asked during the work) join the version still open instead of getting a new number; a new last number only for a new stage or after a push. Commit as usual ("vX.Y.Z: type: summary" with the open version) and add the change to the same line of `historico.md`.
 - Commit without being asked (before and at the end of each stage or round), in the format **"vX.Y.Z: type: short summary"** (no version: "docs: summary"). Types: `feat`, `fix`, `style`, `refactor`, `docs`, `chore`, `test`, `ci`. Check in `git status` that nothing from tests, keys or packages got in.
 - **Never `git push`** without being asked.
+- (15/11/2026) **Parallel agents:** if another agent is working in the same project (uncommitted changes I did not make, or new commits during my work), I work in a separate **git worktree** (own folder and branch next to the project; links to what is not in git, such as the test files folder and `.env.local`; a different test port). The first agent changes nothing. At the end I bring `main` into my branch, take the next free version and test numbers, run the tests and merge into `main`. Even without a worktree, I commit only my own files (`git add <files>`, never `git add -A`).
 
 ## Reusing code
 
