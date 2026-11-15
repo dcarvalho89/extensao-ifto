@@ -2,7 +2,7 @@
 
 **Sections**: Language · Economical reading (tokens) · Project and documentation organization · How we work (small specs) · Chat messages (short) · Tests · Version and git · Reusing code · Improvements that serve several projects · Same rules on every computer
 
-Updated on 13/11/2026 (3). Model: `/home/berg/Desktop/Sistema Gestão Orçamentária/sistema-orcamento-ifto` (CLAUDE.md, docs/, .claude/). New project or one without this organization: propose applying it. The user is not from IT: plain, simple language, commands with the exact text to type and the click path.
+Updated on 15/11/2026. Model: `/home/berg/Desktop/Sistema Gestão Orçamentária/sistema-orcamento-ifto` (CLAUDE.md, docs/, .claude/). New project or one without this organization: propose applying it. The user is not from IT: plain, simple language, commands with the exact text to type and the click path.
 
 ## Language
 
@@ -25,7 +25,7 @@ Updated on 13/11/2026 (3). Model: `/home/berg/Desktop/Sistema Gestão Orçament�
 - `ferramentas-de-teste/` in `.gitignore` (local test and reference files); keys and passwords never in git (`.env.local`, GitHub secrets). Never remove lines from `.gitignore` without permission.
 - `.claude/commands/`: `/planejar`, `/etapa`, `/testes`. `.claude/settings.json`: allows the check commands and `git status/diff/log`; blocks reading `.env.local`.
 - GitHub Actions: checks the project on every push; fixed OS version (e.g. `ubuntu-24.04`), `timeout-minutes`, step names in Portuguese.
-- (12/11/2026) Workflows that check, build or publish **do not run when the push only changes text files**: `paths-ignore: ['**.md', 'docs/**', 'LICENSE', '.claude/**']` on `push` and `pull_request` (a push with any program file still runs everything). The test-cards workflow is the exception (it runs exactly on `TESTES-PENDENTES.md`).
+- Workflows that check, build or publish: see "Docs do not change the version nor publish" in Version and git.
 
 ## How we work (small specs)
 
@@ -52,8 +52,11 @@ Updated on 13/11/2026 (3). Model: `/home/berg/Desktop/Sistema Gestão Orçament�
 
 ## Version and git
 
-- On every code change: bump the version and record it in `historico.md` with the date (dd/mm/yyyy).
-- (13/11/2026) **Which number:** the **middle** one only for a big change (a new feature or a big change in how the system works); all stages of the same feature keep the middle number. The **last** one for everything else: each stage of the same feature, fixes and small changes (e.g. 0.10.0, 0.10.1, 0.10.2…). **Docs only** (`.md`, `docs/`, the tests file): the version does not change; commit "docs: summary".
+- (15/11/2026) **Version number** (on every code change, recorded in `historico.md` with the date dd/mm/yyyy):
+  - **Always in sequence:** each commit that changes code takes the **next** number after the last one in `historico.md` (0.10.0 → 0.10.1 → 0.10.2…). Never skip a number, never reuse one; one commit = one number.
+  - **Not tied to the stage:** the version is not the stage number (stage 4 can be 0.10.2). Two stages in one commit share one number; better: commit each stage before starting the next.
+  - **Which digit:** the **middle** one only for a big change (a new feature or a big change in how the system works; all its stages keep that middle number); the **last** one for everything else (each stage, fixes, small changes).
+- (15/11/2026) **Docs do not change the version nor publish:** a change only in documents (`.md`, `docs/`, the tests file, a new idea in `melhorias-futuras.md`, `.claude/`) does **not** bump the version (no system code changed; commit "docs: summary"), and its push does **not** publish the system (no new site on Render, no new extension package). The same for files that are not part of what is published (e.g. scripts pasted by hand in Google, the test-card scripts). For this, every workflow that checks, builds or publishes has `paths-ignore` on `push` and `pull_request` with these paths (e.g. `['**.md', 'docs/**', 'LICENSE', '.claude/**', 'apps-script/**', '.github/scripts/**', '.github/workflows/testes.yml']`); a push with any program file still runs everything. The test-cards workflow is the exception (it runs exactly on the tests file).
 - (13/11/2026) **Share until pushed:** while nothing was sent to GitHub, small changes of the same round (fixes, style, adjustments asked during the work) join the version still open instead of getting a new number; a new last number only for a new stage or after a push. Commit as usual ("vX.Y.Z: type: summary" with the open version) and add the change to the same line of `historico.md`.
 - Commit without being asked (before and at the end of each stage or round), in the format **"vX.Y.Z: type: short summary"** (no version: "docs: summary"). Types: `feat`, `fix`, `style`, `refactor`, `docs`, `chore`, `test`, `ci`. Check in `git status` that nothing from tests, keys or packages got in.
 - **Never `git push`** without being asked.

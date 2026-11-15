@@ -7,15 +7,16 @@
 # AMO_JWT_ISSUER e AMO_JWT_SECRET.
 name: Assinar extensão
 
-# Envio que só muda textos (README, docs, lista de testes, licença) não roda: não há o que conferir nem assinar.
+# Envio que só muda textos (README, docs, lista de testes, licença) ou os arquivos dos cartões de teste não roda:
+# não há o que conferir nem assinar (nem versão nova).
 # Se o envio tiver também algum arquivo da extensão, roda normalmente.
 on:
   push:
     branches: [master]
-    paths-ignore: ['**.md', 'docs/**', 'LICENSE', '.claude/**']
+    paths-ignore: ['**.md', 'docs/**', 'LICENSE', '.claude/**', '.github/workflows/testes.yml', '.github/scripts/apagar-testes.js', '.github/scripts/ler-resultados.js', '.github/scripts/testes-para-cartoes.js', '.github/scripts/testes-pendentes.js']
   pull_request:
     branches: [master]
-    paths-ignore: ['**.md', 'docs/**', 'LICENSE', '.claude/**']
+    paths-ignore: ['**.md', 'docs/**', 'LICENSE', '.claude/**', '.github/workflows/testes.yml', '.github/scripts/apagar-testes.js', '.github/scripts/ler-resultados.js', '.github/scripts/testes-para-cartoes.js', '.github/scripts/testes-pendentes.js']
   workflow_dispatch: # permite rodar à mão na aba Actions
 
 permissions:
