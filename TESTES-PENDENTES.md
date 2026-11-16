@@ -295,3 +295,6 @@ E: A janela avisa em amarelo que o processo já tem um documento desse tipo e s�
 ### T94 – Fora da CCL (v0.21.0)
 F: Com peças na lista, troque o SEI para outra unidade e abra um processo.
 E: O botão "peças do Compras IFTO" não aparece. Com "Sempre ligada" nas configurações, aparece.
+### T95 – Botão no SEI sem peça na lista (v0.21.1)
+F: Na CCL, sem ter enviado peça, abra um processo e clique em "Peças do Compras IFTO" (no alto à direita).
+E: A janela diz que não há peça esperando e explica como enviar pelo Compras IFTO; "Abrir as configurações" abre o quadro "Licitação (CCL)". Se o botão não aparecer, comente o nome da unidade que aparece no alto do SEI.

@@ -20,11 +20,13 @@
 
   // ---------- Botão na barra ----------
   const botao = barra.botao(ID, { texto: 'Peças do Compras IFTO', titulo: 'Incluir neste processo as peças enviadas pelo Compras IFTO', ordem: 20, aoClicar: () => abrirLista() })
+  // v0.21.1 (teste do usuário, 16/11/2026): o botão aparece na CCL com o processo aberto mesmo sem peça na
+  // lista, para a pessoa saber que a função existe e como mandar a primeira peça.
   async function desenhar () {
-    const pecas = ligada() ? await lerPecas() : []
-    const mostrar = pecas.length > 0 && Boolean(seiPedidos.arvoreAberta())
-    if (mostrar) botao.lastChild.textContent = ` ${pecas.length} ${pecas.length === 1 ? 'peça' : 'peças'} do Compras IFTO`
-    barra.mostrar(ID, mostrar)
+    if (!ligada()) { barra.mostrar(ID, false); return }
+    const pecas = await lerPecas()
+    botao.lastChild.textContent = pecas.length ? ` ${pecas.length} ${pecas.length === 1 ? 'peça' : 'peças'} do Compras IFTO` : ' Peças do Compras IFTO'
+    barra.mostrar(ID, Boolean(seiPedidos.arvoreAberta()))
   }
   quadroArvore.addEventListener('load', () => setTimeout(desenhar, 300))
   navegador.storage.onChanged.addListener(async (mudancas, area) => {
@@ -57,10 +59,19 @@
         ])
       ])
     })
+    // v0.21.1: sem peça, explica como mandar a primeira (qualquer fase, mesmo sem tudo preenchido).
+    const semPecas = [
+      criar('p', { textContent: 'Nenhuma peça do Compras IFTO esperando.' }),
+      criar('p', { className: 'apoio', textContent: 'No Compras IFTO, abra o processo e a fase (DFD, ETP, Termo de Referência…) e clique em "Enviar ao SEI", ao lado de "Copiar para o SEI". A peça pode ir mesmo sem estar toda preenchida: o que falta vai entre colchetes. Depois volte aqui.' }),
+      criar('p', { className: 'apoio', textContent: 'Se o botão "Enviar ao SEI" não aparece no Compras IFTO: nas configurações da extensão, clique em "Permitir no Compras IFTO" e recarregue a página do Compras IFTO (F5).' })
+    ]
     janelaAberta = janela.abrir({
       titulo: 'Peças do Compras IFTO',
-      conteudo: [criar('p', { className: 'apoio', textContent: `Processo aberto: ${lida.numero}. Escolha a peça para criar o documento neste processo.` }), ...cartoes],
-      botoes: [{ texto: 'Fechar', aoClicar: j => j.fechar() }],
+      conteudo: pecas.length ? [criar('p', { className: 'apoio', textContent: `Processo aberto: ${lida.numero}. Escolha a peça para criar o documento neste processo.` }), ...cartoes] : semPecas,
+      botoes: [
+        ...(pecas.length ? [] : [{ texto: 'Abrir as configurações', aoClicar: j => { j.fechar(); navegador.runtime.sendMessage({ tipo: 'comprasConfiguracoes' }) } }]),
+        { texto: 'Fechar', tipo: pecas.length ? '' : 'principal', aoClicar: j => j.fechar() }
+      ],
       aoFechar: () => { janelaAberta = null }
     })
   }

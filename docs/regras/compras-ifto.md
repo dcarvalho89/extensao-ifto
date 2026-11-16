@@ -7,7 +7,7 @@ Decided with dcarvalho89 (CCL) on 16/11/2026; spec in `../specs/feitas/compras-i
 ## Where it works
 
 - Compras IFTO: **only** `https://compras-ifto-teste-v1-mbro.onrender.com/` (not the computer's test copy), with an **optional permission** asked in the settings card "Licitação (CCL)" ("Permitir no Compras IFTO"). Colleagues who do not use Compras IFTO see nothing new.
-- SEI: "Automática" = unit **`CCL/GAC/DAP/PAL/REI/IFTO`**; "Sempre ligada" = any unit; "Desligada". The bar button "N peças do Compras IFTO" shows only with a process open and pieces waiting.
+- SEI: "Automática" = unit **`CCL/GAC/DAP/PAL/REI/IFTO`**; "Sempre ligada" = any unit; "Desligada". The bar button shows with a process open, also with no piece waiting (v0.21.1, user request): "Peças do Compras IFTO" then explains how to send one (any phase, even incomplete: missing fields go in brackets) and opens the settings; with pieces, "N peças do Compras IFTO".
 
 ## From Compras IFTO to the extension
 
