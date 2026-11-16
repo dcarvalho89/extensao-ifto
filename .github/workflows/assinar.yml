@@ -29,6 +29,8 @@ concurrency:
 
 jobs:
   assinar:
+    # Só no repositório original: o fork dcarvalho89 não tem as chaves da Mozilla e gera só o pacote do Chrome e do Edge (chrome-edge.yml), 16/11/2026.
+    if: github.repository == 'gvtenberg/extensao-ifto'
     # Versão fixa do Ubuntu: a troca do ubuntu-latest não muda nada sem aviso
     runs-on: ubuntu-24.04
     timeout-minutes: 90 # v0.9.4: espera da aprovação (até 30 min) + download da versão já assinada (até 30 min) + folga
