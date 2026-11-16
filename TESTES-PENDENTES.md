@@ -289,3 +289,9 @@ E: A janela diz "Pronto: … criado com o texto da peça e salvo. Ele não foi a
 ### T92 – Documento restrito (v0.21.0)
 F: Inclua uma peça escolhendo Restrito e uma hipótese legal.
 E: O documento é criado restrito (ícone de chave na árvore), com a hipótese legal escolhida e o texto salvo.
+### T93 – Aviso de documento repetido (v0.21.0)
+F: Envie de novo pelo Compras IFTO a mesma peça já incluída no T91 e clique em "Incluir neste processo".
+E: A janela avisa em amarelo que o processo já tem um documento desse tipo e só cria depois de marcar "Criar mesmo assim".
+### T94 – Fora da CCL (v0.21.0)
+F: Com peças na lista, troque o SEI para outra unidade e abra um processo.
+E: O botão "peças do Compras IFTO" não aparece. Com "Sempre ligada" nas configurações, aparece.

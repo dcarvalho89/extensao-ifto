@@ -2,9 +2,9 @@
 
 **Sections**: 1. Goal · 2. Out of scope · 3. Decisions to confirm · 4. Decided rules · 5. What changes · 6. Stages · 7. Manual tests · 8. Other integration ideas
 
-- **Status:** in progress
+- **Status:** done (16/11/2026); waiting for the manual tests T87 to T94
 - **Requested on:** 16/11/2026 (dcarvalho89, bidding team CCL) · **Priority:** test first in the CCL
-- **Planned version:** 0.19.0 to 0.22.0
+- **Planned version:** 0.19.0 to 0.22.0 (done in 0.19.0 to 0.21.0: stage 4 had only docs, so no new version)
 
 ## 1. Goal (what for)
 
@@ -34,6 +34,8 @@ Claude does not code while there is a `[ ]` that affects the stage.
 
 ## 4. Decided rules
 
+Moved to `../../regras/compras-ifto.md` at the end (16/11/2026).
+
 - Never signs; never writes to the SEI without the confirmation window (D1).
 - The piece text goes into the body of the document only; the header and footer come from the SEI type's own model (same as "Copiar para o SEI" today).
 - Compras IFTO data is test data (fictitious); no passwords or personal data travel in the message.
@@ -55,7 +57,7 @@ Each stage fits in a short conversation (`/etapa compras-ifto-no-sei <n>`) and e
 - [x] Stage 1 (v0.19.0, 16/11/2026) – **Piece reaches the SEI, nothing written.** Optional permission and bridge on Compras IFTO; "Enviar ao SEI" button in Compras (branch `enviar-ao-sei` of dcarvalho89/compras-ifto-teste-v1); in the SEI (CCL) the bar shows the waiting pieces (list) and the confirmation window with type suggestion, access level, NUP check, same-type warning and preview; the button only said what it would do. The editor survey moved to stage 3: the result window shows which editor and sections the SEI used. Tests T87 to T89.
 - [x] Stage 2 (v0.20.0, 16/11/2026) – **Create the document (Crítico).** After the confirmation, creates the internal document without screens (type, "Texto inicial: Nenhum", access level, hipótese legal when Restrito) and refreshes the tree. Text still empty. The editor and text links come from the SEI answer or, if missing, from the new document's page in the tree. Test T90.
 - [x] Stage 3 (v0.21.0, 16/11/2026) – **Fill and save (Crítico).** Puts the piece in the body section and saves (no signing); refreshes the tree for checking. On an SEI error, shows the SEI message and keeps the piece waiting. How: popup window with the editor (`windows.create`), function `sites/sei/editor-preencher.js` run inside the page (world MAIN): waits for CKEditor 5 (`window.infraEditor.editor`) or CKEditor 4 (`CKEDITOR.instances`); body = the only editable section, or the one labeled "corpo"; otherwise it stops (never writes in a doubtful place); Salvar = CKEditor 4 `save` command or the toolbar button whose label starts with "Salvar"; SEI `alert`/`confirm` during the save are caught and shown (confirm answered "no"). Saved text checked on `documento_visualizar`. Risk to watch in T91: the editor opened without `window.opener` (the SEI may try to refresh the tree through it). Tests T91, T92.
-- [ ] Stage 4 (v0.22.0) – **Finish.** Duplicate warning (D9), README and settings text, rules to `regras/compras-ifto.md`, spec to `feitas/`.
+- [x] Stage 4 (16/11/2026) – **Finish.** Duplicate warning (D9, already in stage 1), README and settings text, rules to `regras/compras-ifto.md`, spec to `feitas/`. Tests T93, T94.
 
 ## 7. Manual tests
 

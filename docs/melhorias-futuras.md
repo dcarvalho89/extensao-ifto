@@ -15,7 +15,7 @@ Summary to resume work (on another machine or by another person) without reading
 - **Done, waiting for tests (Simples Nacional + one button, v0.18.0):** `specs/feitas/consulta-simples.md`; one CGOC button does SICAF + Simples (Sicaf and Consulta with PDFs, blank Anexo); blank-documents button and setting removed; "Sempre ligada" = only "Incluir SICAF" (bidding team). Tests T65, T68, T78 to T82 (T80 critical: writes to the SEI). v0.17.6: icon window shows the SEI only when there is a problem (T77; T04 outdated, ask the user to delete it).
 - **Done, waiting for tests (v0.18.2):** PDFs fetched again on every click, no memory kept in the browser; Downloads copy is a setting per PDF (SICAF, Simples); Sicaf/Consulta already in the process checked before searching and before including. Tests T84, T85. Anexo copy setting: only when the Anexo gets a PDF (user, 13/11/2026).
 - **Done, waiting for tests (v0.18.3):** "Dicas" card in the settings (SEI password in Firefox, PDF compression). Test T86. Tests round of 15/11/2026: 11 passed and deleted; P3 answered (D13 in `specs/base-e-sei.md`).
-- **In progress (16/11/2026):** `specs/compras-ifto-no-sei.md` (Compras IFTO pieces created and saved in the SEI, CCL; never signs); stages 1 to 3 done (v0.19.0 to v0.21.0; tests T87 to T92; T90 and T91 critical). Work on branch `compras-ifto-no-sei` of the fork dcarvalho89/extensao-ifto, then a pull request.
+- **Done, waiting for tests (16/11/2026):** Compras IFTO pieces created and saved in the SEI (CCL; never signs), v0.19.0 to v0.21.0; spec in `specs/feitas/compras-ifto-no-sei.md` (its section 8 lists other integration ideas), rules in `regras/compras-ifto.md`. Tests T87 to T94 (T90 and T91 critical: write to the SEI). Branch `compras-ifto-no-sei` of the fork dcarvalho89/extensao-ifto, then a pull request; Compras IFTO side on branch `enviar-ao-sei` of dcarvalho89/compras-ifto-teste-v1 (Render publishes only `main`). Work on branch `compras-ifto-no-sei` of the fork dcarvalho89/extensao-ifto, then a pull request.
 - **Planned (with spec):** lines marked **[spec]** below. **Not planned:** the other lines (ideas).
 
 ## Ideas
@@ -26,7 +26,6 @@ Marks: **[spec]** already has a spec.
 
 ### Suggested order (to confirm with the user)
 
-0. **Compras IFTO pieces into the SEI (CCL)** **[spec]** → `specs/compras-ifto-no-sei.md` (16/11/2026; other integration ideas in its section 8)
 1. Extension base and SEI improvements (replacing SEI++, which stopped working on the IFTO SEI): New document button, pre-filled external document, drag files with the type recognized, checklists per process type **[spec]** → `specs/base-e-sei.md`
    - Add files directly to a SEI 5 process (12/11/2026): already stage 3 of the spec ("Arrastar arquivos"). An IFTO colleague managed this in their own extension on SEI 5: ask for the extension's name or address and note it in `referencias/` before stage 3.
    - Later: **automatic PDF compression** inside the extension (26/10/2026): compress, compare sizes, report how much is saved on the Rectorate file server, and show the original and compressed PDF side by side so the user sees the quality difference and picks one. Mandatory above 10 MB. Preferably without sending the file to outside sites (D13 of the spec).
