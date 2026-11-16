@@ -14,7 +14,10 @@
     copiaSicaf: true,
     copiaConsulta: true,
     // v0.19.0: peças do Compras IFTO no SEI: "automatica" (só na CCL), "sempre" ou "desligada".
-    comprasIfto: 'automatica'
+    comprasIfto: 'automatica',
+    // v0.22.0: só para desenvolvimento (Chrome/Edge): recarrega a extensão quando os arquivos da pasta mudam
+    // de versão (scripts/atualizar-chrome-dev.ps1 grava a versão nova do GitHub por cima da pasta).
+    recarregarSozinha: false
   })
 
   // Junta o que o usuário gravou com os padrões; opções que não existem mais são ignoradas.

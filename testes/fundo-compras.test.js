@@ -11,21 +11,24 @@ function navegadorDeMentira () {
   const evento = nome => ({ addListener: f => { (ouvintes[nome] = ouvintes[nome] || []).push(f) } })
   const injetados = []
   const guardado = {}
+  const alarmes = []
   const api = {
     runtime: { onInstalled: evento('instalado'), onStartup: evento('inicio'), onMessage: evento('recado'), getURL: c => 'ext://' + c },
     contextMenus: { removeAll: f => f && f(), create: () => {}, onClicked: evento('menu') },
-    storage: { local: { get: async chave => ({ [chave]: guardado[chave] }), set: async dados => Object.assign(guardado, dados), remove: async () => {} } },
+    storage: { local: { get: async chave => ({ [chave]: guardado[chave] }), set: async dados => Object.assign(guardado, dados), remove: async () => {} }, onChanged: evento('armazenamento') },
     tabs: { onUpdated: evento('aba'), query: async () => [], sendMessage: async () => ({}), update: async () => ({}), create: async () => ({}) },
     scripting: { executeScript: async pedido => { injetados.push(pedido); return [{ result: null }] } },
     permissions: { onAdded: evento('permissao'), contains: async () => true },
     windows: { create: async () => ({ id: 1, tabs: [{ id: 2 }] }), remove: async () => {}, update: async () => {} },
-    downloads: {}
+    downloads: {},
+    alarms: { create: (nome, quando) => alarmes.push(['criar', nome, quando.periodInMinutes]), clear: nome => alarmes.push(['tirar', nome]), onAlarm: evento('alarme') }
   }
-  return { api, ouvintes, injetados, guardado }
+  return { api, ouvintes, injetados, guardado, alarmes }
 }
 
-function carregarFundo () {
+function carregarFundo (configuracoes) {
   const falso = navegadorDeMentira()
+  if (configuracoes) falso.guardado.configuracoes = configuracoes
   const contexto = vm.createContext({ console, setTimeout, clearTimeout, URL, TextDecoder, TextEncoder, chrome: falso.api })
   contexto.globalThis = contexto
   const raiz = path.join(__dirname, '..')
@@ -59,4 +62,13 @@ test('fundo: peça do Compras IFTO entra na lista; de outro site é recusada', a
   assert.equal(JSON.stringify(await mandar({ tipo: 'comprasPeca', peca }, { url: 'https://compras-ifto-teste-v1-mbro.onrender.com/#/processo/p1/dfd' })), JSON.stringify({ ok: true, total: 1 }))
   assert.equal(guardado.pecasCompras[0].id, 'p1:dfd')
   assert.ok((await mandar({ tipo: 'comprasPeca', peca }, { url: 'https://outro.site/' })).erro)
+})
+
+test('fundo: recarregar sozinha só com a opção ligada, e só quando a versão da pasta muda (v0.22.0)', async () => {
+  const desligada = carregarFundo({ recarregarSozinha: false })
+  await new Promise(r => setTimeout(r, 0))
+  assert.equal(JSON.stringify(desligada.alarmes), JSON.stringify([['tirar', 'conferir-versao-na-pasta']]))
+  const ligada = carregarFundo({ recarregarSozinha: true })
+  await new Promise(r => setTimeout(r, 0))
+  assert.equal(JSON.stringify(ligada.alarmes), JSON.stringify([['criar', 'conferir-versao-na-pasta', 0.5]]))
 })

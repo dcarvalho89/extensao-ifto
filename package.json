@@ -8,6 +8,7 @@
     "conferir": "web-ext lint --self-hosted --ignore-files \"testes/**\" \"docs/**\" \"ferramentas-de-teste/**\" \".github/**\" \"scripts/**\" package.json package-lock.json CLAUDE.md TESTES-PENDENTES.md",
     "rodar": "web-ext run --ignore-files \"testes/**\" \"docs/**\" \"ferramentas-de-teste/**\"",
     "empacotar-chrome": "node scripts/empacotar-chrome.js",
+    "chrome-dev": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/atualizar-chrome-dev.ps1 -Vigiar",
     "empacotar": "web-ext build --overwrite-dest --ignore-files \"testes/**\" \"docs/**\" \"ferramentas-de-teste/**\" \".github/**\" \"scripts/**\" package.json package-lock.json CLAUDE.md TESTES-PENDENTES.md"
   },
   "devDependencies": {

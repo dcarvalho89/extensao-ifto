@@ -426,3 +426,27 @@ async function concluirEditor (resultado, fecharJanela) {
   } catch (erro) {}
 }
 navegador.runtime.onStartup.addListener(() => navegador.storage.local.remove(CHAVE_EDITOR))
+
+// ---------- Desenvolvimento: recarregar sozinha (v0.22.0) ----------
+// Com a opção ligada, a cada 30 s lê o manifest.json da própria pasta (a extensão sem compactação lê o arquivo
+// do disco) e, se a versão gravada for outra, recarrega a extensão. Quem grava a versão nova é o script
+// scripts/atualizar-chrome-dev.ps1 (baixa do GitHub); a extensão não consegue gravar na própria pasta.
+const ALARME_RECARGA = 'conferir-versao-na-pasta'
+async function prepararRecarga () {
+  if (!navegador.alarms) return
+  const { configuracoes } = await navegador.storage.local.get('configuracoes')
+  if (configuracoes && configuracoes.recarregarSozinha) navegador.alarms.create(ALARME_RECARGA, { periodInMinutes: 0.5 })
+  else navegador.alarms.clear(ALARME_RECARGA)
+}
+async function conferirVersaoNaPasta () {
+  try {
+    const resposta = await fetch(navegador.runtime.getURL('manifest.json'), { cache: 'no-store' })
+    const { version } = await resposta.json()
+    if (version && version !== navegador.runtime.getManifest().version) navegador.runtime.reload()
+  } catch (erro) {
+    // Arquivo sendo gravado agora: confere de novo no próximo alarme.
+  }
+}
+if (navegador.alarms) navegador.alarms.onAlarm.addListener(alarme => { if (alarme.name === ALARME_RECARGA) conferirVersaoNaPasta() })
+navegador.storage.onChanged.addListener((mudancas, area) => { if (area === 'local' && mudancas.configuracoes) prepararRecarga() })
+prepararRecarga()

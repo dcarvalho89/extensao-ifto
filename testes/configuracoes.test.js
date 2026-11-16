@@ -44,3 +44,7 @@ test('peças do Compras IFTO começam automáticas (só na CCL) (v0.19.0)', () =
   assert.equal(PADROES.comprasIfto, 'automatica')
   assert.equal(comPadroes({ comprasIfto: 'desligada' }).comprasIfto, 'desligada')
 })
+
+test('recarregar sozinha (desenvolvimento) começa desligada (v0.22.0)', () => {
+  assert.equal(PADROES.recarregarSozinha, false)
+})

@@ -301,3 +301,9 @@ E: A janela diz que não há peça esperando e explica como enviar pelo Compras 
 ### T96 – DFD do IFTO com o texto do Compras (v0.21.3) (Crítico)
 F: Atualize a extensão para a 0.21.3. No Compras IFTO, "Enviar ao SEI" no DFD; no SEI (CCL), "Peças do Compras IFTO" > "Incluir neste processo" > tipo "Documento de Formalização da Demanda" > "Criar e salvar".
 E: A janela diz "Pronto: … criado com o texto da peça e salvo"; no documento, o corpo tem o texto do Compras (a tabela de orientação do modelo sai), o cabeçalho, o título, a data e o rodapé continuam; a versão do documento passa a 2. Se der aviso amarelo, copie aqui o texto inteiro da janela.
+
+## Desenvolvimento no Chrome e Edge (v0.22.0)
+> No computador de desenvolvimento, com a extensão carregada da pasta Documentos\extensao-ifto-chrome.
+### T97 – Atualizar sozinha a partir do GitHub (v0.22.0)
+F: Configurações > "Desenvolvimento (Chrome e Edge)" > marque "Recarregar sozinha quando os arquivos mudarem". No terminal, na pasta extensao-ifto, digite npm run chrome-dev e deixe aberto. Envie uma versão nova ao GitHub.
+E: Em uns 3 minutos o terminal diz "Pronto: versão … gravada" e, até 30 s depois, edge://extensions mostra a versão nova sem você clicar em Recarregar.

@@ -100,6 +100,17 @@
       <button type="button" class="botao principal" id="permitirCompras">Permitir no Compras IFTO</button>
       <div class="aviso sucesso" id="comprasPermitido" hidden>Acesso ao Compras IFTO permitido.</div>
     </section>
+    <!-- v0.22.0: só para quem está desenvolvendo a extensão no Chrome ou no Edge. -->
+    <section class="cartao">
+      <h1>Desenvolvimento (Chrome e Edge)</h1>
+      <label class="opcao">
+        <input type="checkbox" id="recarregarSozinha">
+        <span>
+          Recarregar sozinha quando os arquivos mudarem
+          <span class="apoio" style="display:block">Só para quem está desenvolvendo a extensão. A cada 30 segundos, a extensão confere a versão gravada na pasta dela e, se mudou, se recarrega. Os arquivos novos são gravados na pasta pelo programa de atualização do computador de desenvolvimento. Deixe desligada no uso normal.</span>
+        </span>
+      </label>
+    </section>
     <div class="aviso sucesso" id="gravado" hidden>Configuração gravada.</div>
     <!-- v0.18.3: dicas pedidas no teste T26 (senha do SEI no Firefox e compactar PDF). -->
     <section class="cartao">
