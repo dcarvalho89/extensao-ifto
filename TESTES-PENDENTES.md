@@ -280,3 +280,6 @@ E: O Compras IFTO diz "Peça enviada à extensão"; no SEI aparece no alto à di
 ### T89 – Janela de confirmação (v0.19.0)
 F: Na lista, clique em "Incluir neste processo" no Termo de Referência. Troque o tipo, marque Restrito e veja a prévia. Feche sem criar.
 E: O tipo "Termo de Referência" (ou o mais parecido) já vem escolhido; Restrito mostra a lista de hipóteses legais do SEI; a prévia mostra o texto da peça; se o NUP do Compras for de outro processo, aparece um aviso vermelho. Comente se o tipo sugerido estava errado.
+### T90 – Criar o documento no processo (v0.20.0) (Crítico)
+F: Na lista de peças, "Incluir neste processo" no Termo de Referência, confira o tipo, deixe Público e clique em "Criar e salvar".
+E: Aparece "Documento criado: Termo de Referência …" e o documento novo aparece na árvore, com o cabeçalho do modelo e sem assinatura. Comente a mensagem se der erro.

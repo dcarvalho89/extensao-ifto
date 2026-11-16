@@ -208,12 +208,77 @@
     })
   }
 
-  // Etapa 1: ainda não grava nada no SEI; só mostra o que seria feito.
-  async function criarESalvar ({ peca, tipo, lida, restrito }) {
-    janela.abrir({
-      titulo: 'Teste: nada foi gravado',
-      conteudo: [criar('p', { textContent: `Seria criado no processo ${lida.numero} um documento "${tipo.nome}" (${restrito ? 'Restrito' : 'Público'}) com o texto da peça "${peca.titulo}". Esta versão da extensão ainda não grava no SEI.` })],
-      botoes: [{ texto: 'Fechar', tipo: 'principal', aoClicar: j => j.fechar() }]
-    })
+  // ---------- Criar o documento (v0.20.0, etapa 2) ----------
+  // Sem abrir telas, como os documentos do pagamento: Incluir Documento › tipo › "Texto inicial: Nenhum"
+  // (o cabeçalho e o rodapé vêm do modelo do tipo) › nível de acesso › Salvar. Devolve os links do editor e
+  // do texto do documento novo.
+  const temOpcaoNula = lista => lista && [...lista.options].some(opcao => opcao.getAttribute('value') === 'null')
+  async function criarDocumento ({ tipo, lida, restrito, hipotese }) {
+    const incluir = await abrirIncluir(lida)
+    const { pagina, formulario } = await formularioDoTipo(incluir, tipo.id)
+    const opcoesDoTexto = [...formulario.querySelectorAll('input[name="rdoTextoInicial"]')]
+    if (!opcoesDoTexto.length) throw new Error(`"${tipo.nome}" não é um documento feito no editor do SEI. Escolha outro tipo.`)
+    const rotuloDe = campo => { const rotulo = campo.id && formulario.querySelector(`label[for="${campo.id}"]`); return (rotulo ? rotulo.textContent : '') + ' ' + campo.id }
+    const nenhum = opcoesDoTexto.find(campo => /nenhum/i.test(rotuloDe(campo))) || opcoesDoTexto.find(campo => campo.getAttribute('value') === 'N')
+    if (!nenhum) throw new Error('Não achei a opção "Texto inicial: Nenhum" no formulário do SEI.')
+    const novos = { hdnIdSerie: tipo.id, rdoTextoInicial: nenhum.getAttribute('value'), rdoNivelAcesso: restrito ? '1' : '0', hdnFlagDocumentoCadastro: '2' }
+    const grau = formulario.querySelector('select[name="selGrauSigilo"]')
+    if (temOpcaoNula(grau)) novos.selGrauSigilo = 'null'
+    const hipoteses = formulario.querySelector('select[name="selHipoteseLegal"]')
+    if (restrito) {
+      if (!hipoteses) throw new Error('O formulário do SEI não tem a hipótese legal para documento restrito.')
+      novos.selHipoteseLegal = hipotese
+    } else if (temOpcaoNula(hipoteses)) {
+      novos.selHipoteseLegal = 'null'
+    }
+    const resposta = await seiPedidos.enviar(formulario, pagina.endereco, novos)
+    // Se o SEI devolve o formulário de novo, não criou (a mensagem do SEI explica).
+    if (seiPedidos.lerHtml(resposta.html).getElementById('frmDocumentoCadastro')) {
+      throw new Error(ExtensaoIFTO.documentosPagamento.mensagemDoSei(resposta.html) || `O SEI não criou o documento "${tipo.nome}".`)
+    }
+    let links = regras.linksDoDocumento(resposta.html, resposta.endereco)
+    // Sem o link do editor na resposta: procura o documento novo na árvore e abre a página dele.
+    const novo = await documentoNovo(lida, links.idDocumento)
+    if ((!links.urlEditor || !links.linkVer) && novo && novo.linkArvore) {
+      const daArvore = await seiPedidos.pedir(new URL(novo.linkArvore, location.href).href)
+      const outros = regras.linksDoDocumento(daArvore.html, daArvore.endereco)
+      links = { urlEditor: links.urlEditor || outros.urlEditor, linkVer: links.linkVer || outros.linkVer, idDocumento: links.idDocumento || outros.idDocumento || novo.id }
+    }
+    return { ...links, idDocumento: links.idDocumento || (novo && novo.id) || '', rotulo: novo ? novo.rotulo : '' }
+  }
+  // Recarrega a árvore e espera o documento novo aparecer (até 15 s): o de id conhecido ou o que não existia.
+  async function documentoNovo (lidaAntes, idDocumento) {
+    const antes = new Set(lidaAntes.documentos.map(doc => doc.id))
+    seiPedidos.recarregarArvore()
+    const fim = Date.now() + 15000
+    while (Date.now() < fim) {
+      await new Promise(resolve => setTimeout(resolve, 700))
+      const lida = seiPedidos.arvoreAberta()
+      if (!lida) continue
+      const achado = idDocumento ? lida.documentos.find(doc => doc.id === idDocumento) : lida.documentos.find(doc => !antes.has(doc.id))
+      if (achado) return achado
+    }
+    return null
+  }
+
+  // Janela de andamento e resultado.
+  async function criarESalvar ({ peca, html, tipo, lida, restrito, hipotese, hoje }) {
+    const andamento = janela.abrir({ titulo: 'Incluindo: ' + peca.titulo, conteudo: [criar('p', { textContent: `Criando o documento "${tipo.nome}" no processo ${lida.numero}…` })], botoes: [] })
+    let criado
+    try {
+      criado = await criarDocumento({ tipo, lida, restrito, hipotese })
+    } catch (erro) {
+      andamento.trocarConteudo([criar('p', { className: 'aviso vermelho', textContent: 'O documento não foi criado: ' + erro.message }), criar('p', { className: 'apoio', textContent: 'A peça continua na lista.' })])
+      andamento.trocarBotoes([{ texto: 'Fechar', tipo: 'principal', aoClicar: j => j.fechar() }])
+      return
+    }
+    const { comprasCriados } = await navegador.storage.local.get('comprasCriados')
+    await navegador.storage.local.set({ comprasCriados: regras.lembrarCriado(comprasCriados, { idProcesso: lida.idProcesso, idTipo: tipo.id, data: hoje }) })
+    const nome = criado.rotulo || `${tipo.nome} (novo)`
+    andamento.trocarConteudo([
+      criar('p', { className: 'aviso verde', textContent: `Documento criado: ${nome}.` }),
+      criar('p', { className: 'apoio', textContent: 'Nesta versão o texto ainda não é colocado: abra o documento na árvore, clique em "Editar Conteúdo" e cole o texto (use "Copiar para o SEI" no Compras IFTO). A peça continua na lista.' })
+    ])
+    andamento.trocarBotoes([{ texto: 'Fechar', tipo: 'principal', aoClicar: j => j.fechar() }])
   }
 })()

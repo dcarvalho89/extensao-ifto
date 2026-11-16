@@ -118,3 +118,14 @@ test('lerArvore guarda a página de cada documento na árvore (v0.20.0, para ach
   assert.equal(lida.documentos[0].linkArvore, 'controlador.php?acao=arvore_visualizar&id_documento=77&infra_hash=ab')
   assert.equal(lida.documentos[0].feitoNoSei, true)
 })
+
+test('Compras IFTO: acha o editor e o texto do documento criado na resposta do SEI (v0.20.0)', () => {
+  const html = `<script>janela = window.open('controlador.php?acao=editor_montar&acao_origem=documento_gerar&id_procedimento=9&id_documento=4321&infra_sistema=100000100&infra_hash=abc123','editor');</script>
+    <iframe src="controlador.php?acao=documento_visualizar&amp;id_documento=4321&amp;infra_hash=def"></iframe>`
+  assert.deepEqual(c.linksDoDocumento(html, 'https://sei.ifto.edu.br/sei/controlador.php?acao=arvore_visualizar'), {
+    urlEditor: 'controlador.php?acao=editor_montar&acao_origem=documento_gerar&id_procedimento=9&id_documento=4321&infra_sistema=100000100&infra_hash=abc123',
+    linkVer: 'controlador.php?acao=documento_visualizar&id_documento=4321&infra_hash=def',
+    idDocumento: '4321'
+  })
+  assert.deepEqual(c.linksDoDocumento('<p>nada</p>', 'x?acao=arvore_visualizar&id_documento=55'), { urlEditor: '', linkVer: '', idDocumento: '55' })
+})

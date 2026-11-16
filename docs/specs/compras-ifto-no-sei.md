@@ -53,7 +53,7 @@ Claude does not code while there is a `[ ]` that affects the stage.
 Each stage fits in a short conversation (`/etapa compras-ifto-no-sei <n>`) and ends with tests, version and commit.
 
 - [x] Stage 1 (v0.19.0, 16/11/2026) – **Piece reaches the SEI, nothing written.** Optional permission and bridge on Compras IFTO; "Enviar ao SEI" button in Compras (branch `enviar-ao-sei` of dcarvalho89/compras-ifto-teste-v1); in the SEI (CCL) the bar shows the waiting pieces (list) and the confirmation window with type suggestion, access level, NUP check, same-type warning and preview; the button only said what it would do. The editor survey moved to stage 3: the result window shows which editor and sections the SEI used. Tests T87 to T89.
-- [ ] Stage 2 (v0.20.0) – **Create the document (Crítico).** After the confirmation, creates the internal document without screens (type, "Texto inicial: Nenhum", access level, hipótese legal when Restrito) and refreshes the tree. Text still empty.
+- [x] Stage 2 (v0.20.0, 16/11/2026) – **Create the document (Crítico).** After the confirmation, creates the internal document without screens (type, "Texto inicial: Nenhum", access level, hipótese legal when Restrito) and refreshes the tree. Text still empty. The editor and text links come from the SEI answer or, if missing, from the new document's page in the tree. Test T90.
 - [ ] Stage 3 (v0.21.0) – **Fill and save (Crítico).** Puts the piece in the body section and saves (no signing); opens the document in the tree for checking. On an SEI error, shows the SEI message and keeps the piece waiting.
 - [ ] Stage 4 (v0.22.0) – **Finish.** Duplicate warning (D9), README and settings text, rules to `regras/compras-ifto.md`, spec to `feitas/`.
 

@@ -174,6 +174,19 @@
     return [...documento.body.childNodes].map(noParaHtml).join('').trim()
   }
 
+  // v0.20.0: links do documento na página que o SEI devolve depois de criar (ou na página dele na árvore):
+  // editor (editor_montar), texto (documento_visualizar) e o número interno (id_documento).
+  function linksDoDocumento (html, endereco) {
+    const achar = acao => {
+      const achado = new RegExp('controlador\\.php\\?acao=' + acao + '[^"\'\\s<>\\\\]*').exec(html || '')
+      return achado ? achado[0].replace(/&amp;/g, '&') : ''
+    }
+    const urlEditor = achar('editor_montar')
+    const linkVer = achar('documento_visualizar')
+    const id = texto => (/[?&]id_documento=(\d+)/.exec(texto || '') || [])[1] || ''
+    return { urlEditor, linkVer, idDocumento: id(urlEditor) || id(linkVer) || id(endereco) }
+  }
+
   // Trecho do começo do texto, para conferir depois que o SEI salvou (comparado sem espaços nem acentos).
   const trechoParaConferir = texto => palavras(texto).slice(0, 12).join(' ')
   const contemTrecho = (texto, trecho) => !trecho || palavras(decodificar(String(texto || '').replace(/<[^>]*>/g, ' '))).join(' ').includes(trecho)
@@ -181,7 +194,7 @@
   const api = {
     ORIGEM_COMPRAS, ORIGENS_COMPRAS, UNIDADE_CCL, MAXIMO_HTML, MAXIMO_PECAS,
     ehDoCompras, funcaoLigada, decodificar, lerPeca, juntarPeca, tirarPeca, palavras, sugerirTipo, lerTipos, compararNup,
-    repetidos, lembrarCriado, filtrarEstilo, atributoPermitido, limparHtml, trechoParaConferir, contemTrecho
+    repetidos, lembrarCriado, linksDoDocumento, filtrarEstilo, atributoPermitido, limparHtml, trechoParaConferir, contemTrecho
   }
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else raiz.ExtensaoIFTO = Object.assign(raiz.ExtensaoIFTO || {}, { comprasIfto: api })
