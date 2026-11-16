@@ -43,7 +43,7 @@ Plain JavaScript, no build step, Manifest V3 (D4 in `specs/base-e-sei.md`). Pure
 | `bibliotecas/pdfjs/` | pdf.js 6.4.299 legacy build (Mozilla, Apache-2.0, unmodified copy from npm `pdfjs-dist`): reads PDF text |
 | `icones/` | Instituto Federal mark (v0.9.5): `icone.svg` (Firefox) and `icone-16/32/48/128.png` (Chrome; drawn pixel-aligned per size, 128 with a 16 px transparent border) |
 | `scripts/empacotar-chrome.js` | `npm run empacotar-chrome`: Chrome/Edge package (folder + `.zip` in `web-ext-artifacts/chrome/`, PNG icons, no Firefox keys) |
-| `testes/` | Automated tests (`npm test`) |
+| `testes/` | Automated tests (`npm test`); `fundo-compras.test.js` (v0.21.2) loads the background scripts of the manifest in a fake browser |
 | `.github/workflows/testes.yml` and `.github/scripts/` | Test cards on GitHub: one card per new test, closes resolved ones (`testes-para-cartoes.js`); `ler-resultados.js` summarizes what the user marked (for `/testes`); `testes-pendentes.js` reads the file |
 | `.github/scripts/baixar-assinada.js` | When Mozilla answers "Version X already exists", downloads that version's already-signed `.xpi` (AMO API v5, waits up to 30 min) so `assinar.yml` publishes the Release anyway (12/11/2026) |
 | `.claude/` | Commands (`/planejar`, `/etapa`, `/testes`) and Claude Code permissions |

@@ -13,6 +13,8 @@ if (typeof importScripts === 'function' && !(globalThis.ExtensaoIFTO && globalTh
 const navegador = globalThis.browser || globalThis.chrome
 const regras = globalThis.ExtensaoIFTO.sicaf
 const simples = globalThis.ExtensaoIFTO.simplesNacional
+// v0.19.0 (v0.21.2: faltava esta linha; sem ela a ponte nunca entrava no Compras IFTO)
+const compras = globalThis.ExtensaoIFTO.comprasIfto
 const MENU = 'buscar-sicaf'
 const SEI = '*://sei.ifto.edu.br/*'
 // Páginas do SEI onde a extensão entra (as outras não respondem).

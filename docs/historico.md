@@ -2,6 +2,7 @@
 
 One or two lines per version, with the date (dd/mm/yyyy). Number 0.STAGE.FIX.
 
+- v0.21.2 (16/11/2026): fix: the bridge never entered the Compras IFTO page (background error "compras is not defined": a line was lost in v0.19.0), so "Enviar ao SEI" never showed. New test `testes/fundo-compras.test.js` runs the background with a fake browser. Checked in a real Edge: the button shows on `#/processo/p1/dfd` and the piece reaches the list.
 - v0.21.1 (16/11/2026): Compras IFTO pieces (user test): the SEI bar button "Peças do Compras IFTO" shows in the CCL with a process open even with no piece waiting; then the window explains how to send the first piece (any phase, even incomplete) and opens the settings for the Compras IFTO permission.
 - (16/11/2026, no version) Compras IFTO pieces, stage 4: README (what it does, settings, data read and kept, precautions), rules in `regras/compras-ifto.md`, spec finished (`specs/feitas/compras-ifto-no-sei.md`).
 - v0.21.0 (16/11/2026): Compras IFTO pieces, stage 3: after creating, the background opens the document editor in a popup window, puts the cleaned text in the body section (CKEditor 5 multi-root of SEI 5 or CKEditor 4) through the page's own editor (`scripting.executeScript`, world MAIN), clicks Salvar (never Assinar), closes the window and the SEI tab checks the saved text on the document page; the piece leaves the list. On any doubt (body section unclear, SEI message, error) it stops, keeps the editor window open and the piece in the list.
