@@ -390,13 +390,29 @@ navegador.tabs.onUpdated.addListener(async (idDaAba, mudanca, aba) => {
   tarefa.idAba = idDaAba
   await navegador.storage.local.set({ [CHAVE_EDITOR]: tarefa })
   try {
-    const [execucao] = await navegador.scripting.executeScript({ target: { tabId: idDaAba }, world: 'MAIN', func: globalThis.ExtensaoIFTO.editorPreencher, args: [tarefa.html] })
+    // v0.21.3: o editor pode estar num quadro (iframe) da janela: procura em todos (até 30 s) e roda só nele.
+    const idDoQuadro = await quadroDoEditor(idDaAba)
+    const [execucao] = await navegador.scripting.executeScript({ target: { tabId: idDaAba, frameIds: [idDoQuadro] }, world: 'MAIN', func: globalThis.ExtensaoIFTO.editorPreencher, args: [tarefa.html] })
     const resultado = execucao && execucao.result
     if (resultado) concluirEditor(resultado, resultado.ok)
   } catch (erro) {
     // Página recarregada no meio do Salvar (editor antigo): o próximo "complete" conclui.
   }
 })
+// Quadro da janela onde está o editor do SEI (CKEditor 5 do SEI 5 ou CKEditor 4); sem achar, o principal (0).
+async function quadroDoEditor (idDaAba) {
+  const temEditor = () => Boolean((window.infraEditor && window.infraEditor.editor && window.infraEditor.editor.model) || (window.CKEDITOR && window.CKEDITOR.instances && Object.keys(window.CKEDITOR.instances).length))
+  const fim = Date.now() + 30000
+  while (Date.now() < fim) {
+    try {
+      const resultados = await navegador.scripting.executeScript({ target: { tabId: idDaAba, allFrames: true }, world: 'MAIN', func: temEditor })
+      const achado = resultados.find(item => item.result)
+      if (achado) return achado.frameId || 0
+    } catch (erro) {}
+    await new Promise(resolve => setTimeout(resolve, 1000))
+  }
+  return 0
+}
 // Fecha a janela do editor só quando deu certo (com erro, a pessoa vê o editor e termina à mão).
 async function concluirEditor (resultado, fecharJanela) {
   const tarefa = await lerTarefaDoEditor()

@@ -53,8 +53,12 @@ async function extensaoIftoPreencherESalvar (html) {
 
   // 3. Corpo: a única seção editável; com mais de uma, a que diz "corpo". Se não der para saber, para
   // (melhor não escrever no lugar errado) e mostra as seções.
+  // v0.21.3: modelos do IFTO (ex.: DFD) podem ter título e data editáveis além do corpo; sem rótulo "corpo",
+  // vale a seção de longe maior (pelo menos o dobro da segunda), que é a do texto do modelo.
   const editaveis = secoes.filter(secao => secao.editavel)
-  let corpo = editaveis.length === 1 ? editaveis[0] : editaveis.find(secao => ROTULO_CORPO.test(secao.rotulo))
+  const porTamanho = [...editaveis].sort((a, b) => b.tamanho - a.tamanho)
+  const maior = porTamanho.length > 1 && porTamanho[0].tamanho >= 2 * Math.max(porTamanho[1].tamanho, 1) ? porTamanho[0] : null
+  let corpo = editaveis.length === 1 ? editaveis[0] : editaveis.find(secao => ROTULO_CORPO.test(secao.rotulo)) || maior
   if (!corpo) {
     resultado.erro = editaveis.length ? 'Não consegui saber qual seção do editor é o corpo do texto.' : 'O editor não tem seção que dê para editar.'
     return resultado

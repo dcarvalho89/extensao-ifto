@@ -298,3 +298,6 @@ E: O botão "peças do Compras IFTO" não aparece. Com "Sempre ligada" nas confi
 ### T95 – Botão no SEI sem peça na lista (v0.21.1)
 F: Na CCL, sem ter enviado peça, abra um processo e clique em "Peças do Compras IFTO" (no alto à direita).
 E: A janela diz que não há peça esperando e explica como enviar pelo Compras IFTO; "Abrir as configurações" abre o quadro "Licitação (CCL)". Se o botão não aparecer, comente o nome da unidade que aparece no alto do SEI.
+### T96 – DFD do IFTO com o texto do Compras (v0.21.3) (Crítico)
+F: Atualize a extensão para a 0.21.3. No Compras IFTO, "Enviar ao SEI" no DFD; no SEI (CCL), "Peças do Compras IFTO" > "Incluir neste processo" > tipo "Documento de Formalização da Demanda" > "Criar e salvar".
+E: A janela diz "Pronto: … criado com o texto da peça e salvo"; no documento, o corpo tem o texto do Compras (a tabela de orientação do modelo sai), o cabeçalho, o título, a data e o rodapé continuam; a versão do documento passa a 2. Se der aviso amarelo, copie aqui o texto inteiro da janela.

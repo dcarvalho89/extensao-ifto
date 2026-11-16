@@ -22,7 +22,7 @@ Decided with dcarvalho89 (CCL) on 16/11/2026; spec in `../specs/feitas/compras-i
 - Access level: **Público** by default; Restrito asks for the hipótese legal from the SEI list.
 - Same type already in the process (in the tree, or created today by the extension): yellow warning and a "Criar mesmo assim" box.
 - "Criar e salvar" is the confirmation: the extension creates the document ("Texto inicial: Nenhum", so the type's header and footer stay), opens the editor in a popup window, puts the text in the **body** section and clicks **Salvar**. It **never signs**.
-- Body section: the only editable one, or the one labeled "corpo"; if unclear, it stops without writing and shows the sections. Messages from the SEI during the save are shown; a question is answered "no".
+- Body section: the only editable one, or the one labeled "corpo", or (v0.21.3, IFTO DFD model with title and date also editable) the clearly largest editable one (at least twice the next); if still unclear, it stops without writing and shows the sections. The body text of the type's model (e.g. the DFD table with guidance texts) is replaced by the piece (user decision, 16/11/2026); header, title, date and footer stay. Messages from the SEI during the save are shown; a question is answered "no".
 - After saving, the text is checked on the document page. Any problem: yellow warning, the editor window stays open, the piece stays in the list.
 
 ## Safety
