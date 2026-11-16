@@ -2,7 +2,7 @@
 
 **Sections**: 1. Goal · 2. Out of scope · 3. Decisions to confirm · 4. Decided rules · 5. What changes · 6. Stages · 7. Manual tests · 8. Other integration ideas
 
-- **Status:** ready to code
+- **Status:** in progress
 - **Requested on:** 16/11/2026 (dcarvalho89, bidding team CCL) · **Priority:** test first in the CCL
 - **Planned version:** 0.19.0 to 0.22.0
 
@@ -43,8 +43,8 @@ Claude does not code while there is a `[ ]` that affects the stage.
 
 - Sites and pages: Compras IFTO (optional permission, D2/D10); SEI process page (bar button), SEI document pages (type choice, `documento_gerar`, editor).
 - Data written: one internal document in the SEI process open (type, access level, text) and saved. In the browser (`storage.local`): `pecasCompras` (list: title, NUP, phase, HTML, time it arrived; D8).
-- Screens: bar button "N peças do Compras IFTO" opening the list, each with "Incluir neste processo" (D8); confirmation window (process, NUP check, type, access level, text preview, "Criar e salvar"); settings card "Compras IFTO (CCL)"; icon window: "Permitir no Compras IFTO".
-- Likely code files: `sites/compras-ifto/ponte.js` (new, on the Compras page: tells the page the extension is there, receives the piece); `comum/compras-ifto.js` (new, pure rules: message check, type suggestion, NUP comparison); `sites/sei/compras-ifto.js` (new, bar button and window); `sites/sei/sei-pedidos.js` (create internal document without screens, fill and save the editor); `fundo/fundo.js` (registers the Compras script only after the permission, `scripting.registerContentScripts`, because content scripts in the manifest are treated as required in Chrome); `manifest.json` (optional host); `configuracoes/`.
+- Screens: bar button "N peças do Compras IFTO" opening the list, each with "Incluir neste processo" (D8); confirmation window (process, NUP check, type, access level, text preview, "Criar e salvar"); settings card "Licitação (CCL): peças do Compras IFTO" with the "Permitir no Compras IFTO" button (v0.19.0: in the settings, not in the icon window: the icon window cannot know which site is open without one more permission).
+- Likely code files: `sites/compras-ifto/ponte.js` (new, on the Compras page: tells the page the extension is there, receives the piece); `comum/compras-ifto.js` (new, pure rules: message check, type suggestion, NUP comparison); `sites/sei/compras-ifto.js` (new, bar button and window); `sites/sei/sei-pedidos.js` (create internal document without screens, fill and save the editor); `fundo/fundo.js` (injects the bridge with `scripting.executeScript` when a Compras IFTO page finishes loading, only with the permission, like the SICAF pages; content scripts in the manifest would be required in Chrome); `manifest.json` (optional host); `configuracoes/`.
 - Compras IFTO (other repository): `src/pages/Editor.tsx` (button "Enviar ao SEI" next to "Copiar para o SEI", shown when `<html data-extensao-ifto>` exists) and `src/lib/pecas.ts` (sends `{origem:'compras-ifto', tipo:'enviar-ao-sei', titulo, nup, fase, html}` with `window.postMessage`, the same HTML as `htmlParaSei`/`minutaParaSei`).
 - Open technical point (survey in stage 1): the Compras docs say the IFTO SEI editor is CKEditor 4.17 (test of 11/11/2026), but `melhorias-futuras.md` says SEI 5.0.4 has a CKEditor 5 multi-root editor at `window.infraEditor.editor` (12/11/2026). How stage 3 fills and saves depends on it.
 
@@ -52,7 +52,7 @@ Claude does not code while there is a `[ ]` that affects the stage.
 
 Each stage fits in a short conversation (`/etapa compras-ifto-no-sei <n>`) and ends with tests, version and commit.
 
-- [ ] Stage 1 (v0.19.0) – **Piece reaches the SEI, nothing written.** Optional permission and bridge on Compras IFTO; "Enviar ao SEI" button in Compras; in the SEI (CCL) the bar shows the waiting pieces (list) and the confirmation window with type suggestion, access level, NUP check and preview, but the button only says what it would do. Read-only survey in the editor: which editor and which sections the SEI shows (result in the window, to note in `regras/sei.md`).
+- [x] Stage 1 (v0.19.0, 16/11/2026) – **Piece reaches the SEI, nothing written.** Optional permission and bridge on Compras IFTO; "Enviar ao SEI" button in Compras (branch `enviar-ao-sei` of dcarvalho89/compras-ifto-teste-v1); in the SEI (CCL) the bar shows the waiting pieces (list) and the confirmation window with type suggestion, access level, NUP check, same-type warning and preview; the button only said what it would do. The editor survey moved to stage 3: the result window shows which editor and sections the SEI used. Tests T87 to T89.
 - [ ] Stage 2 (v0.20.0) – **Create the document (Crítico).** After the confirmation, creates the internal document without screens (type, "Texto inicial: Nenhum", access level, hipótese legal when Restrito) and refreshes the tree. Text still empty.
 - [ ] Stage 3 (v0.21.0) – **Fill and save (Crítico).** Puts the piece in the body section and saves (no signing); opens the document in the tree for checking. On an SEI error, shows the SEI message and keeps the piece waiting.
 - [ ] Stage 4 (v0.22.0) – **Finish.** Duplicate warning (D9), README and settings text, rules to `regras/compras-ifto.md`, spec to `feitas/`.

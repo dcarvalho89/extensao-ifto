@@ -268,3 +268,15 @@ E: Depois do F5, o botão "notas sem SICAF ou Simples" não aparece para essa no
 ### T86 – Dicas nas configurações (v0.18.3)
 F: Clique no ícone da extensão > Configurações e desça até o quadro "Dicas".
 E: Aparecem a dica de deixar só a senha do SEI no Firefox e a de diminuir PDF com links para o ilovepdf.com e o pdf24.org (abrem em outra aba).
+
+## Peças do Compras IFTO no SEI (v0.19.0 a v0.22.0)
+> Entre no SEI na CCL/GAC/DAP/PAL/REI/IFTO. O Compras IFTO do Render precisa estar com a versão que tem o botão "Enviar ao SEI". Use um processo de teste.
+### T87 – Permitir no Compras IFTO e botão "Enviar ao SEI" (v0.19.0)
+F: Ícone da extensão > Configurações > quadro "Licitação (CCL)" > "Permitir no Compras IFTO" e confirme. Abra o Compras IFTO, um processo e a fase Termo de Referência; aperte F5.
+E: Ao lado de "Copiar para o SEI" aparece "Enviar ao SEI". Sem a permissão (ou com a extensão desligada), o botão não aparece.
+### T88 – Peça chega à lista do SEI (v0.19.0)
+F: No Compras IFTO, clique em "Enviar ao SEI" em duas fases (ex.: DFD e Termo de Referência). No SEI, abra o processo de teste.
+E: O Compras IFTO diz "Peça enviada à extensão"; no SEI aparece no alto à direita "2 peças do Compras IFTO", que abre a lista com as duas; "Tirar da lista" tira uma. Enviar a mesma fase de novo não duplica.
+### T89 – Janela de confirmação (v0.19.0)
+F: Na lista, clique em "Incluir neste processo" no Termo de Referência. Troque o tipo, marque Restrito e veja a prévia. Feche sem criar.
+E: O tipo "Termo de Referência" (ou o mais parecido) já vem escolhido; Restrito mostra a lista de hipóteses legais do SEI; a prévia mostra o texto da peça; se o NUP do Compras for de outro processo, aparece um aviso vermelho. Comente se o tipo sugerido estava errado.
