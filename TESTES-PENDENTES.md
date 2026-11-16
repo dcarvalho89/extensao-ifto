@@ -283,3 +283,9 @@ E: O tipo "Termo de Referência" (ou o mais parecido) já vem escolhido; Restrit
 ### T90 – Criar o documento no processo (v0.20.0) (Crítico)
 F: Na lista de peças, "Incluir neste processo" no Termo de Referência, confira o tipo, deixe Público e clique em "Criar e salvar".
 E: Aparece "Documento criado: Termo de Referência …" e o documento novo aparece na árvore, com o cabeçalho do modelo e sem assinatura. Comente a mensagem se der erro.
+### T91 – Texto no corpo e salvo, sem assinar (v0.21.0) (Crítico)
+F: Repita o T90 com outra peça (ex.: DFD). Espere a janela do editor abrir e fechar sozinha.
+E: A janela diz "Pronto: … criado com o texto da peça e salvo. Ele não foi assinado."; o documento na árvore tem o texto do Compras IFTO no corpo, com o cabeçalho e o rodapé do modelo; a peça sai da lista. Copie aqui a linha "Editor do SEI: …" que aparece na janela.
+### T92 – Documento restrito (v0.21.0)
+F: Inclua uma peça escolhendo Restrito e uma hipótese legal.
+E: O documento é criado restrito (ícone de chave na árvore), com a hipótese legal escolhida e o texto salvo.

@@ -275,10 +275,68 @@
     const { comprasCriados } = await navegador.storage.local.get('comprasCriados')
     await navegador.storage.local.set({ comprasCriados: regras.lembrarCriado(comprasCriados, { idProcesso: lida.idProcesso, idTipo: tipo.id, data: hoje }) })
     const nome = criado.rotulo || `${tipo.nome} (novo)`
-    andamento.trocarConteudo([
-      criar('p', { className: 'aviso verde', textContent: `Documento criado: ${nome}.` }),
-      criar('p', { className: 'apoio', textContent: 'Nesta versão o texto ainda não é colocado: abra o documento na árvore, clique em "Editar Conteúdo" e cole o texto (use "Copiar para o SEI" no Compras IFTO). A peça continua na lista.' })
+    const terminar = (lista, botoes = [{ texto: 'Fechar', tipo: 'principal', aoClicar: j => j.fechar() }]) => { andamento.trocarConteudo(lista); andamento.trocarBotoes(botoes) }
+    const aMao = 'Abra o documento na árvore, clique em "Editar Conteúdo", cole o texto (use "Copiar para o SEI" no Compras IFTO) e salve. A peça continua na lista.'
+
+    // v0.21.0 (etapa 3): texto no corpo e Salvar, numa janela do editor aberta pela extensão (nunca assina).
+    if (!criado.urlEditor) {
+      terminar([criar('p', { className: 'aviso amarelo', textContent: `Documento criado: ${nome}, mas não achei o editor dele para colocar o texto.` }), criar('p', { className: 'apoio', textContent: aMao })])
+      return
+    }
+    andamento.trocarConteudo([criar('p', { className: 'aviso verde', textContent: `Documento criado: ${nome}.` }), criar('p', { textContent: 'Abrindo o editor do SEI para colocar o texto e salvar… (a janela do editor fecha sozinha)' })])
+    let resultado
+    try {
+      resultado = await preencherNoEditor(new URL(criado.urlEditor, location.href).href, criado.idDocumento, html)
+    } catch (erro) {
+      resultado = { ok: false, erro: erro.message }
+    }
+    const sobreOEditor = resultado.editor ? criar('p', { className: 'apoio', textContent: `Editor do SEI: ${resultado.editor}; seções: ${(resultado.secoes || []).join(', ') || '—'}${resultado.corpo ? '; texto posto em: ' + resultado.corpo : ''}.` }) : null
+    if (!resultado.ok) {
+      terminar([
+        criar('p', { className: 'aviso amarelo', textContent: `Documento criado: ${nome}, mas o texto não foi salvo. ${resultado.erro || ''}` }),
+        criar('p', { className: 'apoio', textContent: 'Se a janela do editor ficou aberta, confira o texto nela e clique em Salvar. Senão: ' + aMao }),
+        sobreOEditor
+      ])
+      return
+    }
+    // Confere no SEI se o texto ficou salvo (começo do texto na página do documento).
+    let conferido = null
+    if (criado.linkVer) {
+      try {
+        const pagina = await seiPedidos.pedir(new URL(criado.linkVer, location.href).href)
+        const texto = seiPedidos.lerHtml(pagina.html).body.textContent
+        conferido = regras.contemTrecho(texto, regras.trechoParaConferir(seiPedidos.lerHtml(html).body.textContent))
+      } catch (erro) { conferido = null }
+    }
+    if (conferido === false) {
+      terminar([criar('p', { className: 'aviso amarelo', textContent: `Documento criado: ${nome}, mas não encontrei o texto da peça nele depois de salvar. Abra o documento na árvore e confira. A peça continua na lista.` }), sobreOEditor])
+      return
+    }
+    await gravarPecas(regras.tirarPeca(await lerPecas(), peca.id))
+    seiPedidos.recarregarArvore()
+    terminar([
+      criar('p', { className: 'aviso verde', textContent: `Pronto: ${nome} criado com o texto da peça e salvo. Ele não foi assinado.` }),
+      criar('p', { className: 'apoio', textContent: conferido ? 'O texto foi conferido no SEI. Abra o documento na árvore para revisar e assinar.' : 'Abra o documento na árvore para revisar o texto e assinar.' }),
+      sobreOEditor
     ])
-    andamento.trocarBotoes([{ texto: 'Fechar', tipo: 'principal', aoClicar: j => j.fechar() }])
+  }
+
+  // Pede à parte de fundo para abrir o editor, pôr o texto e salvar; espera o recado "comprasResultado".
+  const esperandoEditor = new Map()
+  navegador.runtime.onMessage.addListener((recado, remetente, responder) => {
+    if (!recado || recado.tipo !== 'comprasResultado') return
+    responder({ recebido: true })
+    const aoTerminar = esperandoEditor.get(String(recado.idDocumento || ''))
+    if (aoTerminar) aoTerminar(recado.resultado || { ok: false, erro: 'Sem resposta do editor.' })
+  })
+  function preencherNoEditor (urlEditor, idDocumento, html) {
+    return new Promise((resolver, rejeitar) => {
+      const chave = String(idDocumento || '')
+      const relogio = setTimeout(() => { esperandoEditor.delete(chave); resolver({ ok: false, erro: 'O editor do SEI demorou demais para responder.' }) }, 150000)
+      esperandoEditor.set(chave, resultado => { clearTimeout(relogio); esperandoEditor.delete(chave); resolver(resultado) })
+      navegador.runtime.sendMessage({ tipo: 'comprasPreencher', urlEditor, idDocumento: chave, html }).then(resposta => {
+        if (!resposta || resposta.erro) { clearTimeout(relogio); esperandoEditor.delete(chave); rejeitar(new Error((resposta && resposta.erro) || 'A extensão não abriu o editor.')) }
+      }, erro => { clearTimeout(relogio); esperandoEditor.delete(chave); rejeitar(erro) })
+    })
   }
 })()
