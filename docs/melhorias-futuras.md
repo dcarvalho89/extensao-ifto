@@ -26,6 +26,7 @@ Marks: **[spec]** already has a spec.
 
 ### Suggested order (to confirm with the user)
 
+0. **Compras IFTO pieces into the SEI (CCL)** **[spec]** → `specs/compras-ifto-no-sei.md` (16/11/2026; other integration ideas in its section 8)
 1. Extension base and SEI improvements (replacing SEI++, which stopped working on the IFTO SEI): New document button, pre-filled external document, drag files with the type recognized, checklists per process type **[spec]** → `specs/base-e-sei.md`
    - Add files directly to a SEI 5 process (12/11/2026): already stage 3 of the spec ("Arrastar arquivos"). An IFTO colleague managed this in their own extension on SEI 5: ask for the extension's name or address and note it in `referencias/` before stage 3.
    - Later: **automatic PDF compression** inside the extension (26/10/2026): compress, compare sizes, report how much is saved on the Rectorate file server, and show the original and compressed PDF side by side so the user sees the quality difference and picks one. Mandatory above 10 MB. Preferably without sending the file to outside sites (D13 of the spec).
