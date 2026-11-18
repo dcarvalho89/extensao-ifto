@@ -6,9 +6,10 @@ Updated on 18/11/2026. Read at the start of every programming session (see `~/.c
 
 ## How we work (small specs)
 1. **Plan** (`/planejar`): interview the user and create the spec with small stages (each fits in one conversation).
-2. **Decisions:** a choice that changes a rule, screen or data, or is hard to undo, goes to "Decisions to confirm" with `[ ]`; do not code with a `[ ]` that affects the stage; never decide alone. Ask each doubt as soon as it appears (choice window); the answer goes into the spec.
-3. **Execute** (`/etapa`): read only the spec and what it points to; when finished: tests, version, history, Status, commit, stage checked.
-4. **End of the improvement:** rules to `docs/regras/`, the line leaves `melhorias-futuras.md`, spec to `specs/feitas/`. Small fixes do not need a spec.
+2. **Knock-on effects** (18/11/2026): before proposing or coding a change, list what it affects elsewhere (later steps, failures, other units, documents already there, other features) and bring it as questions with suggestions, without waiting for the user to notice.
+3. **Decisions:** a choice that changes a rule, screen or data, or is hard to undo, goes to "Decisions to confirm" with `[ ]`; do not code with a `[ ]` that affects the stage; never decide alone. Ask each doubt as soon as it appears (choice window); the answer goes into the spec.
+4. **Execute** (`/etapa`): read only the spec and what it points to; when finished: tests, version, history, Status, commit, stage checked.
+5. **End of the improvement:** rules to `docs/regras/`, the line leaves `melhorias-futuras.md`, spec to `specs/feitas/`. Small fixes do not need a spec.
 - At the start do not read `docs/` or `TESTES-PENDENTES.md`. To resume work: only the "Status" section of `docs/melhorias-futuras.md`. History: search for the version. Tests: search for `### Tnn`, never the whole file.
 - New ideas: one line in `melhorias-futuras.md`. New permanent instruction: propose putting it in the project's `CLAUDE.md`.
 
