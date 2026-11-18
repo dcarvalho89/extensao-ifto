@@ -268,3 +268,6 @@ E: Depois do F5, o botão "notas sem SICAF ou Simples" não aparece para essa no
 ### T86 – Dicas nas configurações (v0.18.3)
 F: Clique no ícone da extensão > Configurações e desça até o quadro "Dicas".
 E: Aparecem a dica de deixar só a senha do SEI no Firefox e a de diminuir PDF com links para o ilovepdf.com e o pdf24.org (abrem em outra aba).
+### T87 – Senha reconhecida na assinatura feita dentro do editor (v0.18.4)
+F: Abra um documento seu para editar (ex.: um ateste), clique em "Assinar" na barra do editor e clique no campo Senha.
+E: O Firefox oferece a senha do SEI guardada (ou ela já aparece preenchida); depois de assinar com uma senha nova, o Firefox pergunta se quer guardá-la.

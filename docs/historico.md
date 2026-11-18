@@ -2,6 +2,7 @@
 
 One or two lines per version, with the date (dd/mm/yyyy). Number 0.STAGE.FIX.
 
+- v0.18.4 (17/11/2026): password recognized by Firefox also in the signing window opened from inside the document editor (there the SEI puts `acao=documento_assinar` after `id_documento` in the address, so the extension did not run); "Assinar e próximo" covers it too.
 - v0.18.3 (15/11/2026): "Dicas" card in the settings page (user request on T26): only the SEI password in Firefox (about:config) and PDF compression sites (ilovepdf.com faster, pdf24.org compresses more). P3 answered: the compression tip applies to every document, including restricted ones.
 - v0.18.2 (13/11/2026): SICAF and Simples PDFs fetched again on every click (the day memory kept in the browser was removed and is erased; it was the source of old PDFs and of the supplier name with SICAF code); settings to keep or not a copy in Downloads for each PDF; name taken from the SICAF PDF. Sicaf/Consulta already in the process: also matched by the CNPJ read on the invoice (not only the ateste), failed reads no longer remembered, checked again for the selected CNPJ and right before including (never added twice; unreadable ones get a warning).
 - v0.18.1 (13/11/2026): download files named by browser: `extensao-ifto-firefox-X.Y.Z.xpi` and `extensao-ifto-chrome-edge-X.Y.Z.zip` (user request: easier to know where to click).
