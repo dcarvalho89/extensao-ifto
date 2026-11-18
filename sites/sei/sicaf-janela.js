@@ -28,6 +28,8 @@
     p { margin: 0; }
     .apoio { color: #5B6660; font-size: 13px; }
     .cartao { border: 1px solid #E2E6E3; border-radius: 8px; padding: 10px 12px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+    /* v0.18.5: nota desmarcada (não será consultada) fica apagada */
+    .cartao.desmarcada { opacity: .55; }
     .cartao h2 { font-size: 15px; margin: 0; font-weight: 600; min-width: 0; }
     .aviso { border-radius: 8px; padding: 8px 10px; font-size: 13px; }
     .aviso.vermelho { background: #FDE7E4; color: #8A1F14; }

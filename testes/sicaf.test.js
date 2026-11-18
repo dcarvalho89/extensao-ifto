@@ -326,3 +326,35 @@ test('v0.18.2: Sicaf e Consulta com o CNPJ lido na nota contam, mesmo com outro 
   assert.equal(nota.temSicaf, true)
   assert.equal(nota.temConsulta, true)
 })
+
+// v0.18.5: site fora do ar — aviso sem resposta, pular o site e fechar a aba quando faltou PDF.
+test('andamentoDaBusca: site e CNPJ da vez, aviso depois de 45 s sem passo', () => {
+  assert.deepEqual(sicaf.andamentoDaBusca(null), { ativa: false })
+  const tarefa = { fase: 'sicaf', faltam: ['11', '22'], posicao: 1, simplesFaltam: ['11'], simplesPosicao: 0, ultimoPasso: 1000 }
+  assert.deepEqual(sicaf.andamentoDaBusca(tarefa, 1000 + 44999), { ativa: true, fase: 'sicaf', cnpj: '22', posicao: 1, total: 2, semResposta: false })
+  assert.equal(sicaf.andamentoDaBusca(tarefa, 1000 + 45000).semResposta, true)
+  const simples = sicaf.andamentoDaBusca({ ...tarefa, fase: 'simples' }, 1000)
+  assert.equal(simples.fase, 'simples')
+  assert.equal(simples.cnpj, '11')
+})
+
+test('pularFase: o que faltava do SICAF fica com o motivo e segue para o Simples; depois termina', () => {
+  const tarefa = { fase: 'sicaf', faltam: ['11', '22', '33'], posicao: 1, pesquisado: true, erros: {}, simplesFaltam: ['11', '22'], simplesPosicao: 0, simplesErros: {} }
+  assert.equal(sicaf.pularFase(tarefa, 'pulado'), 'simples')
+  assert.deepEqual(tarefa.erros, { 22: 'pulado', 33: 'pulado' })
+  assert.equal(tarefa.posicao, 3)
+  assert.equal(tarefa.pesquisado, false)
+  tarefa.fase = 'simples'
+  tarefa.simplesPosicao = 1
+  assert.equal(sicaf.pularFase(tarefa, 'pulado 2'), 'fim')
+  assert.deepEqual(tarefa.simplesErros, { 22: 'pulado 2' })
+  assert.equal(tarefa.simplesPosicao, 2)
+  // Só SICAF pedido: pular o SICAF termina.
+  assert.equal(sicaf.pularFase({ fase: 'sicaf', faltam: ['11'], posicao: 0, erros: {}, simplesFaltam: [] }, 'x'), 'fim')
+})
+
+test('buscaComErro: algum CNPJ sem PDF do SICAF ou do Simples', () => {
+  assert.equal(sicaf.buscaComErro({ erros: {}, simplesErros: {} }), false)
+  assert.equal(sicaf.buscaComErro({ erros: { 11: 'x' }, simplesErros: {} }), true)
+  assert.equal(sicaf.buscaComErro({ erros: {}, simplesErros: { 11: 'x' } }), true)
+})

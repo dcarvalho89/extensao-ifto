@@ -466,6 +466,44 @@
     return [upload.nomeUpload, upload.nome, upload.dataHora, upload.tamanho, formatarTamanho(upload.tamanho), idUsuario, sigla].map(escapar).join('±')
   }
 
+  // v0.18.5 (pedido de 18/11/2026): o SICAF ou o Simples Nacional podem estar fora do ar. Sem nenhum passo
+  // da busca por este tempo, a janela do SEI avisa e oferece pular o site ou cancelar (nunca cancela sozinha).
+  const SEM_RESPOSTA_MS = 45000
+  // Situação da busca para a janela do SEI: site da vez, CNPJ da vez e se está sem resposta.
+  function andamentoDaBusca (tarefa, agora = Date.now()) {
+    if (!tarefa) return { ativa: false }
+    const noSicaf = tarefa.fase === 'sicaf'
+    const lista = (noSicaf ? tarefa.faltam : tarefa.simplesFaltam) || []
+    const posicao = (noSicaf ? tarefa.posicao : tarefa.simplesPosicao) || 0
+    return {
+      ativa: true,
+      fase: noSicaf ? 'sicaf' : 'simples',
+      cnpj: lista[posicao] || null,
+      posicao: Math.min(posicao, lista.length),
+      total: lista.length,
+      semResposta: agora - (tarefa.ultimoPasso || agora) >= SEM_RESPOSTA_MS
+    }
+  }
+  // Pula o resto do site da vez: cada CNPJ que faltava fica com o motivo (o documento não é incluído e a nota
+  // continua pendente). Devolve 'simples' (ainda há Simples Nacional a consultar) ou 'fim'.
+  function pularFase (tarefa, motivo) {
+    if (tarefa.fase === 'sicaf') {
+      for (const cnpj of tarefa.faltam.slice(tarefa.posicao)) tarefa.erros[cnpj] = motivo
+      tarefa.posicao = tarefa.faltam.length
+      tarefa.pesquisado = false
+      return (tarefa.simplesFaltam || []).length ? 'simples' : 'fim'
+    }
+    for (const cnpj of (tarefa.simplesFaltam || []).slice(tarefa.simplesPosicao)) tarefa.simplesErros[cnpj] = motivo
+    tarefa.simplesPosicao = (tarefa.simplesFaltam || []).length
+    tarefa.simplesPesquisado = false
+    tarefa.simplesMatriz = false
+    return 'fim'
+  }
+  // Houve CNPJ sem PDF (site fora do ar, pulado, não encontrado): a aba aberta pela extensão é fechada.
+  function buscaComErro (tarefa) {
+    return Object.keys(tarefa.erros || {}).length + Object.keys(tarefa.simplesErros || {}).length > 0
+  }
+
   // "1 nota sem SICAF" / "2 notas sem SICAF"
   function textoDoAviso (quantidade) {
     // v0.17.6: o botão busca SICAF e Simples Nacional juntos.
@@ -479,7 +517,8 @@
     tipoNaArvore, numeroSei, lerRotuloDaNota, trechoPendente, lerAteste, situacaoDoProcesso, textoDoAviso,
     cnpjsDaNota, notaSemTexto, empenhosDoTexto, nomeNoTexto, conferirNota, agruparPorFornecedor,
     URL_CONSULTA_SICAF, URL_LOGIN_COMPRAS, URL_AREA_DE_TRABALHO, ORIGENS_COMPRAS, paginaDoCompras, nomeDoArquivo, lerLinhaDoResultado, lerPdfDoSicaf, paraBase64, deBase64,
-    nomeNaArvore, nomeDoSicaf, nomeDoAnexo, documentosParaIncluir, aproveitarEmBranco, lerRespostaDoUpload, enderecoDoUpload, lerUsuarioDoUpload, formatarTamanho, linhaDoAnexo
+    nomeNaArvore, nomeDoSicaf, nomeDoAnexo, documentosParaIncluir, aproveitarEmBranco, lerRespostaDoUpload, enderecoDoUpload, lerUsuarioDoUpload, formatarTamanho, linhaDoAnexo,
+    SEM_RESPOSTA_MS, andamentoDaBusca, pularFase, buscaComErro
   }
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else raiz.ExtensaoIFTO = Object.assign(raiz.ExtensaoIFTO || {}, { sicaf: api })

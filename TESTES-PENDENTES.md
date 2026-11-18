@@ -271,3 +271,18 @@ E: Aparecem a dica de deixar só a senha do SEI no Firefox e a de diminuir PDF c
 ### T87 – Senha reconhecida na assinatura feita dentro do editor (v0.18.4)
 F: Abra um documento seu para editar (ex.: um ateste), clique em "Assinar" na barra do editor e clique no campo Senha.
 E: O Firefox oferece a senha do SEI guardada (ou ela já aparece preenchida); depois de assinar com uma senha nova, o Firefox pergunta se quer guardá-la.
+
+## SICAF: escolher as notas e site fora do ar (v0.18.5)
+> antes de testar: um processo da CGOC com duas ou mais notas fiscais depois da última Folha de Encaminhamento.
+### T88 – Escolher as notas que serão consultadas (v0.18.5)
+F: Clique em "N notas sem SICAF ou Simples – Buscar", desmarque "Consultar esta nota" em uma nota e clique em "Buscar SICAF e Simples (1 de 2)".
+E: Todas vêm marcadas; a desmarcada fica apagada e não é buscada; no fim, ela não ganha Sicaf, Consulta nem Anexo.
+### T89 – Site sem responder: aviso e "Pular o SICAF" (v0.18.5)
+F: Comece a busca e, na aba do SICAF, não entre com o Gov.br; volte ao SEI e espere uns 45 segundos; clique em "Pular o SICAF".
+E: Aparece em amarelo "O SICAF não responde há mais de 45 segundos e pode estar fora do ar…"; ao pular, a busca segue para o Simples Nacional e a janela final mostra o SICAF como "Não consultado".
+### T90 – "Cancelar e voltar" durante a busca (v0.18.5)
+F: Comece a busca, desmarque antes uma nota, e no SEI clique em "Cancelar e voltar".
+E: A aba do SICAF fecha, você volta ao SEI e a janela das notas reabre com a mesma nota desmarcada.
+### T91 – Fechar a aba do site no meio da busca (v0.18.5)
+F: Comece a busca e feche a aba do SICAF (ou do Simples Nacional) antes do fim.
+E: A janela do SEI não fica parada: mostra o que já veio e o que faltou como "Não consultado: a aba do site foi fechada antes do fim", com o botão "Voltar".
