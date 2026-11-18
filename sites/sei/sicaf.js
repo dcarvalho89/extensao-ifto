@@ -101,13 +101,20 @@
         return
       }
     }
-    buscarNoSicaf([grupo], null, aberta, quais)
+    buscarNoSicaf([grupo], null, aberta, quais, () => janelaDoCnpj(regras.formatarCnpj(cnpj), quais))
   }
 
   // ---------- Busca no SICAF (v0.13.0) ----------
   // Pede ao fundo da extensão: abre a aba do SICAF, pesquisa cada CNPJ e devolve os PDFs (sicafPronto).
-  async function buscarNoSicaf (grupos, resultado, aberta, quais) {
-    const permissao = await navegador.runtime.sendMessage({ tipo: 'sicafPermissao' })
+  // v0.18.5 (pedido de 18/11/2026: com o SICAF fora do ar a busca travou): a janela mostra o site e o CNPJ da
+  // vez, avisa quando o site fica sem responder e tem sempre "Pular" e "Cancelar"; "voltar" reabre a janela
+  // anterior (notas ou CNPJ) com o que a pessoa escolheu.
+  let vigia = null
+  const pararVigia = () => { clearInterval(vigia); vigia = null }
+  const pedirAoFundo = recado => navegador.runtime.sendMessage(recado).catch(() => null)
+
+  async function buscarNoSicaf (grupos, resultado, aberta, quais, voltar) {
+    const permissao = await pedirAoFundo({ tipo: 'sicafPermissao' })
     if (!permissao || !permissao.permitido) {
       aberta.trocarConteudo([
         criar('p', { textContent: 'Para buscar no SICAF e no Simples Nacional, a extensão precisa de permissão para abrir esses sites e salvar os PDFs na pasta Downloads. O navegador pede uma vez só.' }),
@@ -115,35 +122,71 @@
       ])
       aberta.trocarBotoes([
         { texto: 'Cancelar', aoClicar: j => j.fechar() },
-        { texto: 'Abrir configurações', aoClicar: () => navegador.runtime.sendMessage({ tipo: 'abrirConfiguracoes' }) },
-        { texto: BUSCAR[quais], tipo: 'principal', aoClicar: j => buscarNoSicaf(grupos, resultado, j, quais) }
+        { texto: 'Abrir configurações', aoClicar: () => pedirAoFundo({ tipo: 'abrirConfiguracoes' }) },
+        { texto: BUSCAR[quais], tipo: 'principal', aoClicar: j => buscarNoSicaf(grupos, resultado, j, quais, voltar) }
       ])
       return
     }
-    pedidoAtual = { grupos, resultado, quais }
+    pedidoAtual = { grupos, resultado, quais, voltar }
     janelaDaBusca = aberta
     const sites = quais === 'sicaf' ? 'O SICAF abre' : quais === 'simples' ? 'O Simples Nacional abre' : 'O SICAF e o Simples Nacional abrem'
+    const daVez = criar('p', { className: 'apoio', textContent: 'Abrindo o site…' })
+    const alerta = criar('p', { className: 'aviso amarelo', hidden: true })
     aberta.trocarConteudo([
       criar('p', { textContent: quais === 'simples' ? 'Consultando no Simples Nacional:' : quais === 'sicaf' ? 'Buscando no SICAF:' : 'Buscando no SICAF e no Simples Nacional:' }),
       criar('ul', {}, grupos.map(grupo => criar('li', { textContent: regras.formatarCnpj(grupo.cnpj) + (grupo.nome ? ' – ' + grupo.nome : '') }))),
+      daVez,
+      alerta,
       criar('p', { className: 'apoio', textContent: `${sites} numa nova aba. Se pedirem, entre com Gov.br ou resolva a verificação. O resto é automático e, no fim, você volta para cá.` })
     ])
-    aberta.trocarBotoes([{ texto: 'Parar a busca', aoClicar: j => { navegador.runtime.sendMessage({ tipo: 'sicafCancelar' }); pedidoAtual = null; j.fechar() } }])
-    const resposta = await navegador.runtime.sendMessage({
+    const esquecer = () => { pararVigia(); pedidoAtual = null; janelaDaBusca = null }
+    const voltarOuFechar = voltar
+      ? [{ texto: 'Voltar', tipo: 'principal', aoClicar: j => { j.fechar(); voltar() } }, { texto: 'Fechar', aoClicar: j => j.fechar() }]
+      : [{ texto: 'Fechar', tipo: 'principal', aoClicar: j => j.fechar() }]
+    const pararComAviso = texto => {
+      esquecer()
+      aberta.trocarConteudo([criar('p', { className: 'aviso vermelho', textContent: texto })])
+      aberta.trocarBotoes(voltarOuFechar)
+    }
+    aberta.trocarBotoes([
+      { texto: voltar ? 'Cancelar e voltar' : 'Cancelar', aoClicar: j => { esquecer(); pedirAoFundo({ tipo: 'sicafCancelar' }); j.fechar(); if (voltar) voltar() } },
+      { texto: 'Pular este site', aoClicar: j => { alerta.hidden = true; j.botoes[1].disabled = true; pedirAoFundo({ tipo: 'sicafPular' }) } }
+    ])
+    // Acompanha a busca a cada 3 s (o fundo da extensão grava cada passo com a hora).
+    let semBusca = 0
+    let faseVista = null
+    pararVigia()
+    vigia = setInterval(async () => {
+      const andamento = await pedirAoFundo({ tipo: 'sicafAndamento' })
+      if (!pedidoAtual || janelaDaBusca !== aberta) return
+      if (!andamento || !andamento.ativa) {
+        // O resultado pode estar a caminho; sem ele depois de uns segundos, a busca parou.
+        if (++semBusca >= 4) pararComAviso('A busca parou sem trazer o resultado. Tente de novo.')
+        return
+      }
+      semBusca = 0
+      const site = andamento.fase === 'sicaf' ? 'SICAF' : 'Simples Nacional'
+      daVez.textContent = andamento.cnpj
+        ? `Agora: ${site}, CNPJ ${regras.formatarCnpj(andamento.cnpj)} (${andamento.posicao + 1} de ${andamento.total}).`
+        : `Agora: ${site}.`
+      const pular = aberta.botoes[1]
+      if (pular && faseVista !== andamento.fase) { faseVista = andamento.fase; pular.textContent = 'Pular o ' + site; pular.disabled = false }
+      alerta.hidden = !andamento.semResposta
+      alerta.textContent = `O ${site} não responde há mais de ${regras.SEM_RESPOSTA_MS / 1000} segundos e pode estar fora do ar. Se você está entrando com o Gov.br, termine a entrada. Se não, clique em "Pular o ${site}" (o que faltar dele não será incluído) ou em "Cancelar".`
+    }, 3000)
+    const resposta = await pedirAoFundo({
       tipo: 'sicafBuscar',
       cnpjs: grupos.filter(grupo => grupo.precisaSicaf).map(grupo => grupo.cnpj),
       cnpjsSimples: grupos.filter(grupo => grupo.precisaSimples).map(grupo => grupo.cnpj)
     })
-    if (resposta && resposta.erro) {
-      aberta.trocarConteudo([criar('p', { className: 'aviso vermelho', textContent: 'Não consegui abrir a busca: ' + resposta.erro })])
-      aberta.trocarBotoes([{ texto: 'Fechar', tipo: 'principal', aoClicar: j => j.fechar() }])
-    }
+    if (!resposta || resposta.erro) pararComAviso('Não consegui abrir a busca' + (resposta && resposta.erro ? ': ' + resposta.erro : '. Tente de novo.'))
   }
 
   // PDFs que voltaram do SICAF: confere o CNPJ dentro do PDF e mostra cada fornecedor.
   async function aoChegarDoSicaf (resultados) {
     const pedido = pedidoAtual
     pedidoAtual = null
+    pararVigia()
     if (janelaDaBusca) janelaDaBusca.fechar()
     janelaDaBusca = null
     const fornecedores = []
@@ -155,6 +198,7 @@
         fornecedor.simplesBytes = regras.deBase64(item.simples.arquivo)
         fornecedor.simplesArquivo = item.simples.nomeDoArquivo
         fornecedor.nomeConsulta = simplesNacional.nomeDaConsulta(item.simples.nome || fornecedor.nomeNoSicaf || grupo.nome)
+        fornecedor.nomeNoSimples = item.simples.nome || ''
       } else if (item.simples) {
         fornecedor.simplesErro = item.simples.erro || 'A consulta do Simples Nacional não foi feita.'
       }
@@ -169,6 +213,8 @@
           fornecedor.avisos.push({ nivel: 'amarelo', texto: 'Não consegui ler o PDF do SICAF para conferir o CNPJ.' })
         }
       }
+      // v0.18.6: nome da Consulta sem PDF (Simples pulado ou com erro), para manter a ordem da árvore.
+      if (!fornecedor.nomeConsulta) fornecedor.nomeConsulta = simplesNacional.nomeDaConsulta(fornecedor.nomeNoSicaf || grupo.nome)
       fornecedores.push(fornecedor)
     }
     mostrarResultadoDoSicaf(fornecedores, pedido)
@@ -203,13 +249,23 @@
       fornecedor.jaTemConsulta = Boolean(existentes && existentes.raizesComConsulta.has(regras.raizDoCnpj(fornecedor.cnpj)))
       fornecedor.temPdf = Boolean(fornecedor.bytes) && !fornecedor.jaTemSicaf
       fornecedor.temSimples = Boolean(fornecedor.simplesBytes) && !fornecedor.jaTemConsulta
+      // v0.18.6 (spec sicaf-em-branco): Sicaf/Consulta sem PDF já no processo, deste fornecedor.
+      fornecedor.sicafSemPdf = existentes ? regras.doFornecedor(existentes.nomeados, 'sicaf', fornecedor, existentes.cnpjsDosVizinhos) : null
+      fornecedor.consultaSemPdf = existentes ? regras.doFornecedor(existentes.nomeados, 'consulta', fornecedor, existentes.cnpjsDosVizinhos) : null
+      fornecedor.outraUnidade = [fornecedor.sicafSemPdf, fornecedor.consultaSemPdf].some(achado => achado && achado.outraUnidade)
     }
     const naoLidos = existentes ? existentes.naoLidos : []
     // v0.16.0: Sicaf, Consulta e Anexo em branco depois da última Folha são preenchidos em vez de criar outros.
     const oQue = { sicaf: quais !== 'simples', simples: quais !== 'sicaf', anexo: quais === 'tudo' }
-    const itens = regras.aproveitarEmBranco(regras.documentosParaIncluir(fornecedores, oQue), lida ? lida.documentos : [])
+    const paraIncluir = regras.documentosParaIncluir(fornecedores, oQue)
+    for (const item of paraIncluir) {
+      const fornecedor = fornecedores.find(outro => outro.cnpj === item.cnpj)
+      item.semPdfDoProcesso = item.tipo === 'Sicaf' ? fornecedor.sicafSemPdf : item.tipo === 'Consulta' ? fornecedor.consultaSemPdf : null
+    }
+    const itens = regras.aproveitarEmBranco(paraIncluir, lida ? lida.documentos : [])
     for (const item of itens) {
       const fornecedor = fornecedores.find(outro => outro.cnpj === item.cnpj)
+      if (item.semPdf) continue
       if (item.tipo === 'Sicaf') item.arquivo = { bytes: fornecedor.bytes, nome: fornecedor.nomeDoArquivo || regras.nomeDoArquivo(fornecedor.cnpj) }
       if (item.tipo === 'Consulta') item.arquivo = { bytes: fornecedor.simplesBytes, nome: fornecedor.simplesArquivo }
     }
@@ -222,9 +278,10 @@
         !fornecedor.pediuSimples ? null : fornecedor.simplesErro ? criar('p', { className: 'aviso vermelho', textContent: 'Simples Nacional: ' + fornecedor.simplesErro }) : criar('p', {}, ['PDF do Simples Nacional obtido agora' + (fornecedor.simplesSalvo ? ' (cópia na pasta Downloads). ' : '. '), linkDoPdf(fornecedor.simplesBytes)]),
         fornecedor.jaTemSicaf ? criar('p', { className: 'aviso verde', textContent: 'O Sicaf deste fornecedor já está no processo: não será incluído de novo.' }) : null,
         fornecedor.jaTemConsulta ? criar('p', { className: 'aviso verde', textContent: 'A Consulta do Simples Nacional deste fornecedor já está no processo: não será incluída de novo.' }) : null,
+        fornecedor.outraUnidade ? criar('p', { className: 'aviso vermelho', textContent: `O ${fornecedor.sicafSemPdf && fornecedor.sicafSemPdf.outraUnidade ? 'Sicaf' : 'Consulta do Simples Nacional'} sem PDF desta empresa foi criado por outra unidade; só ela pode anexar o PDF. Nada será incluído para esta empresa.` }) : null,
         ...fornecedor.avisos.map(aviso => criar('p', { className: 'aviso ' + aviso.nivel, textContent: aviso.texto })),
         doFornecedor.length ? criar('p', { className: 'apoio', textContent: 'Será incluído:' }) : null,
-        doFornecedor.length ? criar('ul', {}, doFornecedor.map(item => criar('li', { textContent: nomeDoItem(item) + (item.arquivo ? ' (com o PDF)' : '') + (item.emBranco ? (item.nomeArvore || item.arquivo ? ` – no ${item.tipo} em branco ${item.emBranco.sei}` : ` – já existe em branco (${item.emBranco.sei})`) : '') }))) : null
+        doFornecedor.length ? criar('ul', {}, doFornecedor.map(item => criar('li', { textContent: nomeDoItem(item) + (item.arquivo ? ' (com o PDF)' : '') + (item.semPdf ? ' – sem PDF (complete depois, para manter a ordem)' : '') + (item.emBranco ? (item.nomeArvore || item.arquivo ? ` – no ${item.tipo} em branco ${item.emBranco.sei}` : ` – já existe em branco (${item.emBranco.sei})`) : '') }))) : null
       ])
     })
     // Sicaf ou Consulta do processo que não abriu: não dá para saber de quem é; a pessoa confere.
@@ -246,6 +303,8 @@
       conteudo: [...cartoes, alerta],
       botoes: [
         { texto: 'Cancelar', aoClicar: j => j.fechar() },
+        // v0.18.5: volta à janela das notas (ou do CNPJ) com as escolhas feitas.
+        ...(pedido && pedido.voltar ? [{ texto: 'Voltar', aoClicar: j => { j.fechar(); pedido.voltar() } }] : []),
         {
           texto: `Incluir no processo (${itens.length})`,
           tipo: 'principal',
@@ -253,8 +312,9 @@
             if (temVermelho && !confirmouVermelho) {
               confirmouVermelho = true
               alerta.hidden = false
-              j.botoes[1].textContent = 'Incluir mesmo assim'
-              j.botoes[1].className = 'acao perigo'
+              const incluir = j.botoes[j.botoes.length - 1]
+              incluir.textContent = 'Incluir mesmo assim'
+              incluir.className = 'acao perigo'
               return
             }
             incluirNoProcesso(itens, j, nomeDoItem)
@@ -336,7 +396,13 @@
     const naoLidos = []
     for (const doc of inicial.sicafs) { const cnpjs = await cnpjsDoDocumento(doc); if (cnpjs) cnpjsDosSicafs[doc.id] = cnpjs; else naoLidos.push(doc) }
     for (const doc of inicial.consultas) { const cnpjs = await cnpjsDoDocumento(doc); if (cnpjs) cnpjsDasConsultas[doc.id] = cnpjs; else naoLidos.push(doc) }
+    // v0.18.6: Sicaf/Consulta sem PDF e com nome, em toda a árvore, com os CNPJs do vizinho que tem PDF.
+    const nomeados = regras.semPdfNomeados(lida.documentos)
+    const cnpjsDosVizinhos = { ...cnpjsDosSicafs, ...cnpjsDasConsultas }
+    for (const { vizinho } of nomeados) if (vizinho && !cnpjsDosVizinhos[vizinho.id]) cnpjsDosVizinhos[vizinho.id] = (await cnpjsDoDocumento(vizinho)) || []
     return {
+      nomeados,
+      cnpjsDosVizinhos,
       inicial,
       cnpjsDosSicafs,
       cnpjsDasConsultas,
@@ -351,15 +417,15 @@
     const lida = seiPedidos.arvoreAberta()
     if (!lida) return null
     const existentes = await jaNoProcesso(lida)
-    const { inicial, cnpjsDosSicafs, cnpjsDasConsultas, cnpjsComSicaf, raizesComConsulta, naoLidos } = existentes
-    if (!inicial.notas.length) return { lida, situacao: inicial, cnpjsComSicaf, raizesComConsulta, naoLidos }
+    const { inicial, cnpjsDosSicafs, cnpjsDasConsultas, cnpjsComSicaf, raizesComConsulta, naoLidos, nomeados } = existentes
+    if (!inicial.notas.length) return { lida, situacao: inicial, cnpjsComSicaf, raizesComConsulta, naoLidos, nomeados }
     const atestes = {}
     for (const doc of inicial.atestes) atestes[doc.id] = await lerAteste(doc)
     // v0.18.2: CNPJ do emitente lido na própria nota (o mesmo que a busca usa).
     const cnpjsDasNotas = {}
     for (const nota of inicial.notas) cnpjsDasNotas[nota.id] = await textoDoDocumento(nota).then(regras.cnpjsDaNota, () => [])
     const situacao = regras.situacaoDoProcesso(lida.documentos, { atestes, cnpjsDosSicafs, cnpjsDasConsultas, cnpjsDasNotas })
-    return { lida, situacao, cnpjsComSicaf, raizesComConsulta, naoLidos }
+    return { lida, situacao, cnpjsComSicaf, raizesComConsulta, naoLidos, nomeados }
   }
 
   // ---------- Aviso na barra ----------
@@ -372,12 +438,28 @@
     try { resultado = await analisar() } catch (erro) { resultado = null }
     if (minhaVez !== vez) return
     atual = resultado
+    avisarSemPdf(resultado ? resultado.nomeados.filter(achado => achado.antesDaFolha) : [])
     const pendentes = resultado ? resultado.situacao.pendentes : []
     if (!pendentes.length) { barra.mostrar(ID, false); return }
     escreverNoBotao(regras.textoDoAviso(pendentes.length) + ' – Buscar')
     botao.title = 'Notas fiscais depois da última Folha de Encaminhamento sem SICAF ou Simples Nacional:\n' +
       pendentes.map(nota => `Nota ${nota.numero || '?'} – ${nota.fornecedor || 'fornecedor não identificado'}`).join('\n')
     barra.mostrar(ID, true)
+  }
+
+  // v0.18.6 (R7, usuário 18/11/2026: só aviso): Sicaf ou Consulta sem PDF antes da última Folha (processo
+  // indo para o financeiro). Só avisa; o PDF é anexado à mão no SEI.
+  const ID_SEM_PDF = 'sicaf-sem-pdf'
+  const botaoSemPdf = barra.botao(ID_SEM_PDF, { texto: '', ordem: 14, aoClicar: () => window.alert(botaoSemPdf.title) })
+  botaoSemPdf.style.color = '#B3261E'
+  botaoSemPdf.style.fontWeight = 'bold'
+  function avisarSemPdf (achados) {
+    if (!achados.length) { barra.mostrar(ID_SEM_PDF, false); return }
+    const nomes = achados.map(achado => (achado.tipo === 'sicaf' ? 'Sicaf' : 'Consulta') + ' sem PDF: ' + (achado.nome || achado.doc.rotulo))
+    botaoSemPdf.lastChild.textContent = ' ' + (nomes.length === 1 ? nomes[0] : `${nomes.length} documentos sem PDF`)
+    botaoSemPdf.title = 'Antes da última Folha de Encaminhamento há documento sem o PDF:\n' + nomes.join('\n') +
+      '\nAnexe o PDF no SEI: clique no documento e em "Alterar Documento Externo".'
+    barra.mostrar(ID_SEM_PDF, true)
   }
 
   // A árvore recarrega sozinha (documento incluído, processo trocado): lê de novo.
@@ -424,27 +506,45 @@
   }
 
   // Janela com cada nota: CNPJ (ou escolha), avisos vermelhos e amarelos. Vermelho pede um segundo clique.
+  // v0.18.5 (pedido de 18/11/2026): com mais de uma nota, cada uma tem "Consultar esta nota", todas marcadas;
+  // a nota desmarcada (ex.: cancelada) não ganha Sicaf, Consulta nem Anexo. A escolha não fica guardada.
   function janelaDasNotas (notas, resultado) {
-    const cartoes = notas.map(nota => cartaoDaNota(nota, resultado))
+    const escolher = notas.length > 1
+    for (const nota of notas) if (nota.marcada === undefined) nota.marcada = true
+    const marcadas = () => notas.filter(nota => nota.marcada)
     const alerta = criar('p', { className: 'aviso vermelho', hidden: true, textContent: 'Há diferenças em vermelho. Confira a nota e o ateste antes de continuar.' })
-    const temVermelho = notas.some(nota => nota.avisos.some(aviso => aviso.nivel === 'vermelho'))
     let confirmouVermelho = false
-    janela.abrir({
+    let aberta = null
+    const textoDoBotao = () => escolher ? `${BUSCAR.tudo} (${marcadas().length} de ${notas.length})` : BUSCAR.tudo
+    const aoMarcar = () => {
+      confirmouVermelho = false
+      alerta.hidden = true
+      const botao = aberta && aberta.botoes[1]
+      if (botao) { botao.textContent = textoDoBotao(); botao.className = 'acao principal'; botao.disabled = !marcadas().length }
+    }
+    const cartoes = notas.map(nota => cartaoDaNota(nota, resultado, escolher ? aoMarcar : null))
+    aberta = janela.abrir({
       titulo: regras.textoDoAviso(notas.length),
-      conteudo: [criar('p', { className: 'apoio', textContent: 'Notas depois da última Folha de Encaminhamento, conferidas com o ateste. Você pode clicar na árvore do processo com esta janela aberta.' }), ...cartoes, alerta],
+      conteudo: [
+        criar('p', { className: 'apoio', textContent: 'Notas depois da última Folha de Encaminhamento, conferidas com o ateste. Você pode clicar na árvore do processo com esta janela aberta.' + (escolher ? ' Desmarque as notas que não devem ser consultadas (por exemplo, uma nota cancelada).' : '') }),
+        ...cartoes,
+        alerta
+      ],
       botoes: [
         { texto: 'Cancelar', aoClicar: j => j.fechar() },
         {
-          texto: BUSCAR.tudo,
+          texto: textoDoBotao(),
           tipo: 'principal',
           aoClicar: j => {
-            const semCnpj = notas.filter(nota => !regras.cnpjValido(nota.cnpjEscolhido))
+            const escolhidas = marcadas()
+            if (!escolhidas.length) return
+            const semCnpj = escolhidas.filter(nota => !regras.cnpjValido(nota.cnpjEscolhido))
             if (semCnpj.length) {
               alerta.hidden = false
               alerta.textContent = 'Escolha ou digite o CNPJ do fornecedor da nota ' + semCnpj.map(nota => nota.numero || '?').join(', ') + '.'
               return
             }
-            if (temVermelho && !confirmouVermelho) {
+            if (escolhidas.some(nota => nota.avisos.some(aviso => aviso.nivel === 'vermelho')) && !confirmouVermelho) {
               confirmouVermelho = true
               alerta.hidden = false
               alerta.textContent = 'Há diferenças em vermelho. Confira a nota e o ateste antes de continuar.'
@@ -452,20 +552,30 @@
               j.botoes[1].className = 'acao perigo'
               return
             }
-            const grupos = regras.agruparPorFornecedor(notas.map(nota => ({ ...nota, cnpj: nota.cnpjEscolhido })))
-            buscarFornecedores(grupos, resultado, j)
+            const grupos = regras.agruparPorFornecedor(escolhidas.map(nota => ({ ...nota, cnpj: nota.cnpjEscolhido })))
+            buscarFornecedores(grupos, resultado, j, () => janelaDasNotas(notas, resultado))
           }
         }
       ]
     })
+    aoMarcar()
   }
 
-  function cartaoDaNota (nota, { cnpjsComSicaf, raizesComConsulta }) {
+  function cartaoDaNota (nota, { cnpjsComSicaf, raizesComConsulta }, aoMarcar) {
     const titulo = `Nota ${nota.numero || '?'} – ${nota.fornecedor || 'fornecedor'}` + (nota.sei ? ` (SEI ${nota.sei})` : '')
     const partes = [criar('div', { className: 'linha' }, [criar('h2', { textContent: titulo }), botaoVerNota(nota)])]
+    const cartao = criar('div', { className: 'cartao' })
+    if (aoMarcar) {
+      const marca = criar('input', { type: 'checkbox', checked: nota.marcada })
+      marca.addEventListener('change', () => { nota.marcada = marca.checked; cartao.classList.toggle('desmarcada', !marca.checked); aoMarcar() })
+      cartao.classList.toggle('desmarcada', !nota.marcada)
+      partes.push(criar('label', { className: 'escolha' }, [marca, 'Consultar esta nota']))
+    }
     if (nota.escolher) {
       const nome = 'cnpj-' + nota.id
-      const outro = criar('input', { type: 'text', placeholder: 'Outro CNPJ' })
+      // v0.18.5: ao voltar à janela, o CNPJ digitado antes continua no campo.
+      const digitado = nota.cnpjEscolhido && !nota.opcoes.includes(nota.cnpjEscolhido)
+      const outro = criar('input', { type: 'text', placeholder: 'Outro CNPJ', value: digitado ? regras.formatarCnpj(nota.cnpjEscolhido) : '' })
       const opcoes = nota.opcoes.map((cnpj, posicao) => {
         const marca = criar('input', { type: 'radio', name: nome, value: cnpj, checked: cnpj === nota.cnpjEscolhido })
         marca.addEventListener('change', () => { if (marca.checked) { nota.cnpjEscolhido = cnpj; outro.value = '' } })
@@ -484,7 +594,8 @@
     for (const aviso of nota.avisos) partes.push(criar('p', { className: 'aviso ' + aviso.nivel, textContent: aviso.texto }))
     if (nota.cnpj && cnpjsComSicaf.has(nota.cnpj)) partes.push(criar('p', { className: 'aviso verde', textContent: 'Este fornecedor já tem Sicaf neste trecho do processo.' }))
     if (nota.cnpj && raizesComConsulta.has(regras.raizDoCnpj(nota.cnpj))) partes.push(criar('p', { className: 'aviso verde', textContent: 'Este fornecedor já tem a Consulta do Simples Nacional neste trecho do processo.' }))
-    return criar('div', { className: 'cartao' }, partes)
+    cartao.append(...partes)
+    return cartao
   }
 
   // v0.17.3: "Ver a nota" abre a nota ao lado da árvore, como o clique na árvore (a janela não tampa mais o SEI).
@@ -501,7 +612,7 @@
 
   // v0.13.0: fornecedores conferidos vão para o SICAF (os que já têm Sicaf neste trecho ficam de fora).
   // v0.18.0: e para o Simples Nacional (os que já têm a Consulta com o PDF ficam de fora).
-  function buscarFornecedores (grupos, resultado, aberta) {
+  function buscarFornecedores (grupos, resultado, aberta, voltar) {
     const marcados = grupos.map(grupo => ({
       ...grupo,
       precisaSicaf: !resultado.cnpjsComSicaf.has(grupo.cnpj),
@@ -510,10 +621,10 @@
     const faltam = marcados.filter(grupo => grupo.precisaSicaf || grupo.precisaSimples)
     if (!faltam.length) {
       aberta.trocarConteudo([criar('p', { textContent: 'Todos esses fornecedores já têm Sicaf e Consulta do Simples Nacional neste trecho do processo.' })])
-      aberta.trocarBotoes([{ texto: 'Fechar', tipo: 'principal', aoClicar: j => j.fechar() }])
+      aberta.trocarBotoes([{ texto: 'Voltar', aoClicar: j => { j.fechar(); voltar() } }, { texto: 'Fechar', tipo: 'principal', aoClicar: j => j.fechar() }])
       return
     }
-    buscarNoSicaf(faltam, resultado, aberta, 'tudo')
+    buscarNoSicaf(faltam, resultado, aberta, 'tudo', voltar)
   }
 
   navegador.storage.onChanged.addListener(async (mudancas, area) => {

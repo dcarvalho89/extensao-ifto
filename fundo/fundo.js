@@ -50,7 +50,9 @@ function tratarRecado (recado, remetente) {
     case 'sicafPermissao': return temPermissao().then(sim => ({ permitido: sim }))
     case 'abrirConfiguracoes': return navegador.tabs.create({ url: navegador.runtime.getURL('configuracoes/index.html#sicaf') }).then(() => ({ ok: true }))
     case 'sicafBuscar': return iniciarBusca(recado.cnpjs || [], aba, recado.cnpjsSimples)
-    case 'sicafCancelar': return gravarTarefa(null).then(() => ({ ok: true }))
+    case 'sicafCancelar': return cancelarBusca()
+    case 'sicafAndamento': return lerTarefa().then(tarefa => regras.andamentoDaBusca(tarefa))
+    case 'sicafPular': return pularBusca()
     case 'sicafQualCnpj': return qualCnpj(aba)
     case 'sicafPesquisei': return marcarPesquisa(recado.cnpj)
     case 'sicafPdf': return receberPdf(recado, aba)
@@ -102,8 +104,9 @@ async function lerTarefa () {
   const { [CHAVE_TAREFA]: tarefa } = await navegador.storage.local.get(CHAVE_TAREFA)
   return tarefa || null
 }
+// v0.18.5: cada passo gravado marca a hora (a janela do SEI avisa quando o site fica sem responder).
 async function gravarTarefa (tarefa) {
-  if (tarefa) await navegador.storage.local.set({ [CHAVE_TAREFA]: tarefa })
+  if (tarefa) await navegador.storage.local.set({ [CHAVE_TAREFA]: { ...tarefa, ultimoPasso: Date.now() } })
   else await navegador.storage.local.remove(CHAVE_TAREFA)
 }
 
@@ -129,6 +132,42 @@ async function iniciarBusca (cnpjs, abaSei, cnpjsSimples) {
   await gravarTarefa(tarefa)
   return { ok: true, faltam: faltam.length + simplesFaltam.length }
 }
+
+// v0.18.5 (pedido de 18/11/2026: o SICAF fora do ar travou a busca): a pessoa pode, a qualquer momento,
+// pular o site da vez (segue para o Simples Nacional ou termina com o que já veio) ou cancelar tudo.
+async function pularBusca () {
+  const tarefa = await lerTarefa()
+  if (!tarefa) return { ok: false }
+  const site = tarefa.fase === 'sicaf' ? 'o SICAF' : 'o Simples Nacional'
+  const fase = tarefa.fase
+  regras.pularFase(tarefa, `Não consultado: você pulou ${site}.`)
+  if (fase === 'sicaf') await irParaOSimples(tarefa, tarefa.idAbaSicaf)
+  else await terminar(tarefa)
+  return { ok: true }
+}
+// Cancelar: esquece a busca, fecha a aba que a extensão abriu e volta ao SEI.
+async function cancelarBusca () {
+  const tarefa = await lerTarefa()
+  await gravarTarefa(null)
+  if (tarefa) await fecharAbaDaBusca(tarefa)
+  return { ok: true }
+}
+async function fecharAbaDaBusca (tarefa) {
+  try { if (tarefa.idAbaSicaf != null) await navegador.tabs.remove(tarefa.idAbaSicaf) } catch (erro) {}
+  try { await navegador.tabs.update(tarefa.idAbaSei, { active: true }) } catch (erro) {}
+}
+// A pessoa fechou a aba da busca: termina com o que já veio (antes a janela do SEI esperava para sempre).
+// Aba do SEI fechada: a busca não tem para onde voltar e é esquecida.
+navegador.tabs.onRemoved.addListener(async idDaAba => {
+  const tarefa = await lerTarefa()
+  if (!tarefa) return
+  if (idDaAba === tarefa.idAbaSei) return gravarTarefa(null)
+  if (idDaAba !== tarefa.idAbaSicaf) return
+  tarefa.idAbaSicaf = null
+  const motivo = 'Não consultado: a aba do site foi fechada antes do fim.'
+  if (regras.pularFase(tarefa, motivo) === 'simples') { tarefa.fase = 'simples'; regras.pularFase(tarefa, motivo) }
+  await terminar(tarefa)
+})
 
 // Cada página do Compras/SICAF que termina de abrir na aba da busca (ou SICAF aberto pelo menu).
 navegador.tabs.onUpdated.addListener(async (idDaAba, mudanca, aba) => {
@@ -223,7 +262,7 @@ async function receberPdf (recado, aba) {
 // ---------- Consulta do Simples Nacional (v0.17.2) ----------
 // Fim do SICAF: a mesma aba abre a consulta do Simples Nacional (ou termina, se não falta nenhuma).
 async function irParaOSimples (tarefa, idDaAba) {
-  if (!tarefa.simplesFaltam || !tarefa.simplesFaltam.length) return terminar(tarefa)
+  if (!tarefa.simplesFaltam || !tarefa.simplesFaltam.length || idDaAba == null) return terminar(tarefa)
   tarefa.fase = 'simples'
   await gravarTarefa(tarefa)
   try { await navegador.tabs.update(idDaAba, { url: simples.URL_CONSULTA_SIMPLES }) } catch (erro) { await terminar(tarefa) }
@@ -298,6 +337,8 @@ async function salvarEmDownloads (base64, nomeDoArquivo) {
 // Entrega os PDFs (os de hoje + erros) à aba do SEI e volta para ela.
 async function terminar (tarefa) {
   await gravarTarefa(null)
+  // v0.18.5: com algum CNPJ sem PDF (site fora do ar, pulado), a aba aberta pela extensão é fechada.
+  if (regras.buscaComErro(tarefa)) await fecharAbaDaBusca(tarefa)
   const pdfs = tarefa.pdfs || {}
   const consultas = tarefa.consultas || {}
   const errosDoSimples = tarefa.simplesErros || {}

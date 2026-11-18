@@ -65,14 +65,14 @@
     {
       "matches": [
         "*://sei.ifto.edu.br/*login.php*",
-        "*://sei.ifto.edu.br/*controlador.php?acao=documento_assinar*"
+        "*://sei.ifto.edu.br/*controlador.php?*acao=documento_assinar*"
       ],
       "run_at": "document_idle",
       "all_frames": true,
       "js": ["comum/sei.js", "comum/configuracoes.js", "sites/sei/campo-senha.js"]
     },
     {
-      "matches": ["*://sei.ifto.edu.br/*controlador.php?acao=documento_assinar*"],
+      "matches": ["*://sei.ifto.edu.br/*controlador.php?*acao=documento_assinar*"],
       "run_at": "document_idle",
       "all_frames": true,
       "js": ["sites/sei/assinar-e-proximo.js"]

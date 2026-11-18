@@ -1,5 +1,7 @@
 # Browser extension – IFTO Campus Palmas (UG 158336)
 
+@~/.claude/regras/programacao.md
+
 Extension for **Firefox** and Chrome (free package, v0.5.0) that goes with the campus Budget Management System: it improves the IFTO SEI and, with login, reads the system data from the Google Spreadsheet to fill documents and capture data on other sites (SEI, SUAP, SIAFI, SICAF, Simples Nacional, Comprasnet). Version in `manifest.json`. The main system lives in `../sistema-orcamento-ifto` (another repository): business rules and the spreadsheet are there; **do not copy**, read only the needed part.
 
 ## Language (12/11/2026)
@@ -9,10 +11,10 @@ Extension for **Firefox** and Chrome (free package, v0.5.0) that goes with the c
 
 ## Economical reading
 
-- **First command of the session:** `diff -q ~/.claude/CLAUDE.md docs/claude-regras-gerais.md` (the user's general rules, identical on every computer). If they differ or the computer file is missing, follow the section "Same rules on every computer" of `docs/claude-regras-gerais.md`.
+- **First command of the session:** `diff -q ~/.claude/CLAUDE.md docs/claude-regras/CLAUDE.md; diff -rq ~/.claude/regras docs/claude-regras/regras` (the user's general rules, identical on every computer). If they differ or the computer files are missing, follow "Same rules on every computer" in `docs/claude-regras/regras/programacao.md`.
 - At the start **do not read** `docs/` or `TESTES-PENDENTES.md`. Read only what the task needs, only the needed part, and do not re-read what was already read in the session.
 - Files with several sections have the "**Sections**" index on line 3: read the first 5 lines and search for the section title. `docs/historico.md`: search for the version (`v0.1.3`). `TESTES-PENDENTES.md`: `### T12` or the mark (see `/testes`); never the whole file. To resume work: only the "Status" section of `docs/melhorias-futuras.md`.
-- Where things are: `docs/arquitetura.md` (file map) · `docs/regras/` (decided rules, one file per subject; list in `LEIA-ME.md`) · `docs/padrao-visual.md` (window, settings and what the extension adds to pages) · `docs/referencias/` (other extensions and sites, e.g. SEI++) · `docs/melhorias-futuras.md` (Status: done, in progress, pending; and the ideas, one line each) · `docs/specs/` (one spec per improvement in progress; finished in `feitas/`) · `docs/historico.md` (what went into each version) · `docs/claude-regras-gerais.md` (copy of Claude's general rules, `~/.claude/CLAUDE.md`) · `docs/publicacao.md` (Mozilla signing via GitHub, installation, Chrome package, saved passwords) · `TESTES-PENDENTES.md` (root: manual tests T01, T02…). In the main system: `docs/planilha.md` (tabs and columns) and `docs/regras/`.
+- Where things are: `docs/arquitetura.md` (file map) · `docs/regras/` (decided rules, one file per subject; list in `LEIA-ME.md`) · `docs/padrao-visual.md` (window, settings and what the extension adds to pages) · `docs/referencias/` (other extensions and sites, e.g. SEI++) · `docs/melhorias-futuras.md` (Status: done, in progress, pending; and the ideas, one line each) · `docs/specs/` (one spec per improvement in progress; finished in `feitas/`) · `docs/historico.md` (what went into each version) · `docs/claude-regras/` (copy of Claude's general rules, `~/.claude/CLAUDE.md` and `~/.claude/regras/`) · `docs/publicacao.md` (Mozilla signing via GitHub, installation, Chrome package, saved passwords) · `TESTES-PENDENTES.md` (root: manual tests T01, T02…). In the main system: `docs/planilha.md` (tabs and columns) and `docs/regras/`.
 
 ## Documentation (so another person or machine can continue)
 
@@ -58,7 +60,7 @@ Extension for **Firefox** and Chrome (free package, v0.5.0) that goes with the c
 ## Version and git
 
 - On every code change: bump `version` in `manifest.json` to the **next** number after the last one in `docs/historico.md` (never skip or reuse; middle number only for a big change or new feature, the last one for everything else) and one or two lines in `docs/historico.md` with the date (dd/mm/yyyy). Each version pushed to GitHub is signed only once by Mozilla.
-- **No version, no signing** (15/11/2026): docs only (`.md`, `docs/`, `TESTES-PENDENTES.md`, `.claude/`) and the test-card files (`.github/workflows/testes.yml`, `.github/scripts/` except `baixar-assinada.js`) do not bump the version (commit "docs: …" or "ci: …"), and their push does not start "Assinar extensão" (`paths-ignore` in `assinar.yml`). Rule in `docs/claude-regras-gerais.md`.
+- **No version, no signing** (15/11/2026): docs only (`.md`, `docs/`, `TESTES-PENDENTES.md`, `.claude/`) and the test-card files (`.github/workflows/testes.yml`, `.github/scripts/` except `baixar-assinada.js`) do not bump the version (commit "docs: …" or "ci: …"), and their push does not start "Assinar extensão" (`paths-ignore` in `assinar.yml`). Rule in `~/.claude/regras/programacao.md`.
 - Commit without waiting to be asked: before each stage or round (if there are pending changes) and when finished, in the format **"vX.Y.Z: type: short summary"** (e.g. "v0.1.3: feat: procurar atualização na janela"; without a version change: "docs: summary"). Types: `feat`, `fix`, `style`, `refactor`, `docs`, `chore`, `test`, `ci`. Check in `git status` that nothing from `ferramentas-de-teste/`, keys or `.xpi` got in.
 - **Never `git push`** without being asked: the push triggers Mozilla signing (and GitHub Actions has usage limits). Say the commit was not pushed.
 

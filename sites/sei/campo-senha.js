@@ -1,3 +1,4 @@
+// v0.18.4: a janela de assinatura aberta de dentro do editor tem "id_documento" antes de "acao" no endereço.
 // v0.1.1: senha reconhecida pelo navegador na tela de entrada do SEI e na assinatura de documentos.
 // O SEI 5 usa o MaskedPassword: o campo visível vira texto com "●" e a senha vai para um campo escondido,
 // e o Firefox deixa de oferecer (e de guardar) a senha. Aqui trocamos os dois por um campo de senha comum,
