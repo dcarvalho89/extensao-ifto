@@ -17,7 +17,7 @@ Summary to resume work (on another machine or by another person) without reading
 - **Done, waiting for tests (v0.18.3):** "Dicas" card in the settings (SEI password in Firefox, PDF compression). Test T86. Tests round of 15/11/2026: 11 passed and deleted; P3 answered (D13 in `specs/base-e-sei.md`).
 - **Done, waiting for tests (v0.18.4):** password recognized by Firefox also when signing from inside the document editor (user report, 17/11/2026). Test T87.
 - **Done, waiting for tests (v0.18.5):** choose which invoices are searched (cancelled ones unchecked); SICAF/Simples down: warning after 45 s, skip the site, cancel and go back to the invoices. Tests T88 to T91.
-- **Ready to code:** `specs/sicaf-em-branco.md` (blank Sicaf/Consulta without PDF keep the tree order when a site is skipped; filled later; 3 stages, v0.19.0).
+- **Ready to code:** `specs/sicaf-em-branco.md` (blank Sicaf/Consulta without PDF keep the tree order when a site is skipped; filled later; 3 stages, v0.18.6 to v0.18.8).
 - **Planned (with spec):** lines marked **[spec]** below. **Not planned:** the other lines (ideas).
 
 ## Ideas

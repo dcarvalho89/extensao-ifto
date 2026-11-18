@@ -4,7 +4,7 @@
 
 - **Status:** ready to code
 - **Requested on:** 18/11/2026 · **Deadline or priority:** next after the v0.18.5 tests
-- **Planned version:** 0.19.0
+- **Planned version:** 0.18.6 (stage 1), 0.18.7, 0.18.8 — a follow-up of the v0.18.5 skip, not a new feature
 
 ## 1. Goal (what for)
 
