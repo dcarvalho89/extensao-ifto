@@ -286,3 +286,15 @@ E: A aba do SICAF fecha, você volta ao SEI e a janela das notas reabre com a me
 ### T91 – Fechar a aba do site no meio da busca (v0.18.5)
 F: Comece a busca e feche a aba do SICAF (ou do Simples Nacional) antes do fim.
 E: A janela do SEI não fica parada: mostra o que já veio e o que faltou como "Não consultado: a aba do site foi fechada antes do fim", com o botão "Voltar".
+### T92 – SICAF pulado: Sicaf sem PDF antes da Consulta (v0.18.6) (Crítico)
+F: Num processo de teste com uma nota sem SICAF, clique em "N notas sem SICAF ou Simples – Buscar", clique em "Pular o SICAF", deixe o Simples terminar e clique em "Incluir no processo".
+E: A janela lista "Sicaf <empresa> – sem PDF (complete depois…)", a Consulta e o Anexo; na árvore ficam nessa ordem, o Sicaf com o nome da empresa e sem PDF.
+### T93 – SICAF e Simples pulados: nada incluído (v0.18.6)
+F: Comece a busca e clique em "Pular o SICAF" e depois em "Pular o Simples Nacional".
+E: A janela final não oferece incluir nada dessa empresa (nem o Anexo); a nota continua sem SICAF.
+### T94 – Completar o Sicaf sem PDF depois (v0.18.6) (Crítico)
+F: No processo do T92, clique de novo em "1 nota sem SICAF ou Simples – Buscar", faça a busca do SICAF e clique em "Incluir no processo".
+E: A janela diz "no Sicaf em branco <número>"; nenhum documento novo é criado: o mesmo Sicaf ganha o PDF e o nome que está no SICAF.
+### T95 – Aviso de Sicaf sem PDF antes da Folha (v0.18.6)
+F: Num processo com um Sicaf sem PDF e uma Folha de Encaminhamento depois dele, abra o processo.
+E: A barra da extensão mostra em vermelho "Sicaf sem PDF: <empresa>"; ao clicar, explica como anexar o PDF à mão.

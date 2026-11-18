@@ -2,9 +2,9 @@
 
 **Sections**: 1. Goal · 2. Out of scope · 3. Decisions to confirm · 4. Decided rules · 5. What changes · 6. Stages · 7. Manual tests
 
-- **Status:** ready to code
+- **Status:** done (v0.18.6, all stages in one version)
 - **Requested on:** 18/11/2026 · **Deadline or priority:** next after the v0.18.5 tests
-- **Planned version:** 0.18.6 (stage 1), 0.18.7, 0.18.8 — a follow-up of the v0.18.5 skip, not a new feature
+- **Version:** 0.18.6 — a follow-up of the v0.18.5 skip, not a new feature
 
 ## 1. Goal (what for)
 
@@ -17,7 +17,7 @@ The CGOC standard order in payment processes is Sicaf → Consulta Simples Nacio
 
 ## 3. Decisions to confirm
 
-None open (all answered by the user on 18/11/2026; see section 4).
+None open (all answered by the user on 18/11/2026; see section 4). Answers while coding (18/11/2026): Consulta already in the process + SICAF skipped → blank Sicaf anyway; R7 only a warning (no button to attach); R8 message without the unit name; filling later also sets the official SICAF name.
 
 ## 4. Decided rules
 
@@ -41,9 +41,9 @@ None open (all answered by the user on 18/11/2026; see section 4).
 
 ## 6. Stages
 
-- [ ] Stage 1 – Rules in `comum/sicaf.js` with tests: R1–R3 (what to create, blank items), R4 (names). Confirmation window labels. Creation without PDF in the SEI.
-- [ ] Stage 2 – R5 + R6: detect named Sicaf/Consulta without PDF, link by the neighbour's CNPJ, attach the PDF to it.
-- [ ] Stage 3 – R7 (red notice before the last Folha) and R8 (other unit).
+- [x] Stage 1 – Rules in `comum/sicaf.js` with tests: R1–R3 (what to create, blank items), R4 (names). Confirmation window labels. Creation without PDF in the SEI.
+- [x] Stage 2 – R5 + R6: detect named Sicaf/Consulta without PDF, link by the neighbour's CNPJ, attach the PDF to it.
+- [x] Stage 3 – R7 (red notice before the last Folha) and R8 (other unit).
 
 ## 7. Manual tests
 

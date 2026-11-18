@@ -404,25 +404,78 @@
   // v0.17.6 (pedido de 13/11/2026, um botão só): o que incluir depende do pedido. CGOC (notas): Sicaf com o
   // PDF, Consulta com o PDF do Simples Nacional ("Consulta Simples Nacional <nome>", fornecedor.nomeConsulta)
   // e um Anexo em branco por nota. Fora da CGOC: só o Sicaf ou só a Consulta, conforme o botão.
+  // v0.18.6 (pedido de 18/11/2026, spec sicaf-em-branco): a ordem padrão da CGOC é Sicaf → Consulta → Anexo
+  // e o SEI 5.0.4 não reordena. Na CGOC ("ordem": os três pedidos), site pulado ou com erro vira documento
+  // sem PDF, com o nome completo, só quando um documento depois dele entra no mesmo clique (R1, R3). Sem
+  // Sicaf e sem Consulta (nem no processo) não entra nada da empresa, nem o Anexo (R2). Já existente (com ou
+  // sem PDF) ocupa o lugar: não cria outro. Empresa com Sicaf/Consulta sem PDF de outra unidade: nada (R8).
+  // Campos do fornecedor: temPdf/temSimples (PDF obtido agora), jaTemSicaf/jaTemConsulta (com PDF no
+  // processo), sicafSemPdf/consultaSemPdf (sem PDF no processo), outraUnidade.
   function documentosParaIncluir (fornecedores, { sicaf = true, simples = true, anexo = true } = {}) {
+    const ordem = sicaf && simples && anexo
     const itens = []
     for (const fornecedor of fornecedores || []) {
-      if (sicaf && fornecedor.temPdf) itens.push({ tipo: 'Sicaf', nomeArvore: nomeDoSicaf(fornecedor.nomeNoSicaf || fornecedor.nome), cnpj: fornecedor.cnpj })
-      if (simples && fornecedor.temSimples) itens.push({ tipo: 'Consulta', nomeArvore: fornecedor.nomeConsulta || '', cnpj: fornecedor.cnpj })
-      if (!anexo) continue
-      for (const nota of fornecedor.notas || []) {
-        if (!nota.anexoFeito) itens.push({ tipo: 'Anexo', nomeArvore: nomeDoAnexo(nota.numero, nota.fornecedor), cnpj: fornecedor.cnpj, nota: nota.numero })
+      const nomeSicaf = nomeDoSicaf(fornecedor.nomeNoSicaf || fornecedor.nomeNoSimples || fornecedor.nome)
+      if (fornecedor.outraUnidade) continue
+      if (!ordem) {
+        if (sicaf && fornecedor.temPdf) itens.push({ tipo: 'Sicaf', nomeArvore: nomeSicaf, cnpj: fornecedor.cnpj })
+        if (simples && fornecedor.temSimples) itens.push({ tipo: 'Consulta', nomeArvore: fornecedor.nomeConsulta || '', cnpj: fornecedor.cnpj })
+        if (anexo) for (const nota of fornecedor.notas || []) if (!nota.anexoFeito) itens.push({ tipo: 'Anexo', nomeArvore: nomeDoAnexo(nota.numero, nota.fornecedor), cnpj: fornecedor.cnpj, nota: nota.numero })
+        continue
       }
+      const temSicaf = fornecedor.temPdf || fornecedor.jaTemSicaf || fornecedor.sicafSemPdf
+      const temConsulta = fornecedor.temSimples || fornecedor.jaTemConsulta || fornecedor.consultaSemPdf
+      const anexos = (fornecedor.jaTemSicaf || fornecedor.temPdf || fornecedor.jaTemConsulta || fornecedor.temSimples)
+        ? (fornecedor.notas || []).filter(nota => !nota.anexoFeito).map(nota => ({ tipo: 'Anexo', nomeArvore: nomeDoAnexo(nota.numero, nota.fornecedor), cnpj: fornecedor.cnpj, nota: nota.numero }))
+        : []
+      const consulta = fornecedor.temSimples ? { tipo: 'Consulta', nomeArvore: fornecedor.nomeConsulta || '', cnpj: fornecedor.cnpj }
+        : !temConsulta && anexos.length ? { tipo: 'Consulta', nomeArvore: fornecedor.nomeConsulta || '', cnpj: fornecedor.cnpj, semPdf: true } : null
+      const sicafItem = fornecedor.temPdf ? { tipo: 'Sicaf', nomeArvore: nomeSicaf, cnpj: fornecedor.cnpj }
+        : !temSicaf && (consulta || anexos.length) ? { tipo: 'Sicaf', nomeArvore: nomeSicaf, cnpj: fornecedor.cnpj, semPdf: true } : null
+      itens.push(...[sicafItem, consulta].filter(Boolean), ...anexos)
     }
     return itens
+  }
+
+  // v0.18.6 (R5, R6): Sicaf e Consulta sem PDF e com nome (criados pela regra acima) em toda a árvore. A
+  // empresa vem do CNPJ do vizinho com PDF (Consulta logo depois do Sicaf; Sicaf logo antes da Consulta);
+  // o nome é só o reserva (ver doFornecedor). Devolve { tipo, doc, vizinho, nome, antesDaFolha, outraUnidade }.
+  const SEM_NOME = /^(Sicaf|Consulta|Anexo)\s*\(?\d+\)?$/i
+  function semPdfNomeados (documentos) {
+    const lista = documentos || []
+    let ultimaFolha = -1
+    lista.forEach((doc, posicao) => { if (tipoNaArvore(doc.rotulo) === 'folha') ultimaFolha = posicao })
+    const achados = []
+    lista.forEach((doc, posicao) => {
+      const tipo = tipoNaArvore(doc.rotulo)
+      if ((tipo !== 'sicaf' && tipo !== 'consulta') || doc.temArquivo || doc.feitoNoSei || SEM_NOME.test(String(doc.rotulo || '').trim())) return
+      const outro = tipo === 'sicaf' ? lista[posicao + 1] : lista[posicao - 1]
+      const vizinho = outro && outro.temArquivo && tipoNaArvore(outro.rotulo) === (tipo === 'sicaf' ? 'consulta' : 'sicaf') ? outro : null
+      const nome = String(doc.rotulo).replace(/\s*\(?\d{6,}\)?\s*$/, '').replace(/^(Sicaf|Consulta)\s+(Simples Nacional\s+)?/i, '').trim()
+      achados.push({ tipo, doc, vizinho, nome, antesDaFolha: posicao < ultimaFolha, outraUnidade: !doc.linkAlterar })
+    })
+    return achados
+  }
+  // O Sicaf ou a Consulta sem PDF de um fornecedor: pelo CNPJ do vizinho (raiz, a Consulta vale para a
+  // empresa toda) ou, sem ele, pelo nome. cnpjsDosVizinhos: { idDoVizinho: [CNPJs do PDF] }.
+  function doFornecedor (nomeados, tipo, fornecedor, cnpjsDosVizinhos = {}) {
+    const raiz = raizDoCnpj(fornecedor.cnpj)
+    const nomes = [fornecedor.nomeNoSicaf, fornecedor.nomeNoSimples, fornecedor.nome, ...(fornecedor.notas || []).map(nota => nota.fornecedor)].filter(Boolean)
+    const doTipo = (nomeados || []).filter(achado => achado.tipo === tipo)
+    return doTipo.find(achado => achado.vizinho && (cnpjsDosVizinhos[achado.vizinho.id] || []).some(cnpj => raizDoCnpj(cnpj) === raiz)) ||
+      doTipo.find(achado => !(achado.vizinho && (cnpjsDosVizinhos[achado.vizinho.id] || []).length) && nomes.some(nome => nomesParecidos(nome, achado.nome))) || null
   }
 
   // v0.16.0 (decidido em 13/11/2026): Sicaf, Consulta e Anexo em branco depois da última Folha (criados pelo
   // botão "Incluir Sicaf, Consulta e Anexo") são aproveitados, na ordem da árvore, em vez de criar outros.
   // Só os que ainda não têm nome ("Sicaf (3385629)"): um em branco já nomeado é de outra nota.
+  // v0.18.6: item com "semPdfDoProcesso" (Sicaf/Consulta sem PDF e com nome, do mesmo fornecedor) recebe o
+  // PDF e o nome oficial nesse mesmo documento (R5).
   function aproveitarEmBranco (itens, documentos) {
-    const livres = trechoPendente(documentos).filter(doc => !doc.temArquivo && !doc.feitoNoSei && doc.linkAlterar && /^(Sicaf|Consulta|Anexo)\s*\(?\d+\)?$/i.test(String(doc.rotulo || '').trim()))
+    const livres = trechoPendente(documentos).filter(doc => !doc.temArquivo && !doc.feitoNoSei && doc.linkAlterar && SEM_NOME.test(String(doc.rotulo || '').trim()))
     return itens.map(item => {
+      const nomeado = item.semPdfDoProcesso
+      if (nomeado && !item.semPdf) return { ...item, emBranco: { id: nomeado.doc.id, sei: numeroSei(nomeado.doc.rotulo), linkAlterar: nomeado.doc.linkAlterar } }
       const posicao = livres.findIndex(doc => tipoNaArvore(doc.rotulo) === item.tipo.toLowerCase())
       if (posicao < 0) return item
       const [doc] = livres.splice(posicao, 1)
@@ -517,7 +570,7 @@
     tipoNaArvore, numeroSei, lerRotuloDaNota, trechoPendente, lerAteste, situacaoDoProcesso, textoDoAviso,
     cnpjsDaNota, notaSemTexto, empenhosDoTexto, nomeNoTexto, conferirNota, agruparPorFornecedor,
     URL_CONSULTA_SICAF, URL_LOGIN_COMPRAS, URL_AREA_DE_TRABALHO, ORIGENS_COMPRAS, paginaDoCompras, nomeDoArquivo, lerLinhaDoResultado, lerPdfDoSicaf, paraBase64, deBase64,
-    nomeNaArvore, nomeDoSicaf, nomeDoAnexo, documentosParaIncluir, aproveitarEmBranco, lerRespostaDoUpload, enderecoDoUpload, lerUsuarioDoUpload, formatarTamanho, linhaDoAnexo,
+    nomeNaArvore, nomeDoSicaf, nomeDoAnexo, documentosParaIncluir, semPdfNomeados, doFornecedor, aproveitarEmBranco, lerRespostaDoUpload, enderecoDoUpload, lerUsuarioDoUpload, formatarTamanho, linhaDoAnexo,
     SEM_RESPOSTA_MS, andamentoDaBusca, pularFase, buscaComErro
   }
   if (typeof module !== 'undefined' && module.exports) module.exports = api

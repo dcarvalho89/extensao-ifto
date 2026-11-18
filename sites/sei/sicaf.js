@@ -198,6 +198,7 @@
         fornecedor.simplesBytes = regras.deBase64(item.simples.arquivo)
         fornecedor.simplesArquivo = item.simples.nomeDoArquivo
         fornecedor.nomeConsulta = simplesNacional.nomeDaConsulta(item.simples.nome || fornecedor.nomeNoSicaf || grupo.nome)
+        fornecedor.nomeNoSimples = item.simples.nome || ''
       } else if (item.simples) {
         fornecedor.simplesErro = item.simples.erro || 'A consulta do Simples Nacional não foi feita.'
       }
@@ -212,6 +213,8 @@
           fornecedor.avisos.push({ nivel: 'amarelo', texto: 'Não consegui ler o PDF do SICAF para conferir o CNPJ.' })
         }
       }
+      // v0.18.6: nome da Consulta sem PDF (Simples pulado ou com erro), para manter a ordem da árvore.
+      if (!fornecedor.nomeConsulta) fornecedor.nomeConsulta = simplesNacional.nomeDaConsulta(fornecedor.nomeNoSicaf || grupo.nome)
       fornecedores.push(fornecedor)
     }
     mostrarResultadoDoSicaf(fornecedores, pedido)
@@ -246,13 +249,23 @@
       fornecedor.jaTemConsulta = Boolean(existentes && existentes.raizesComConsulta.has(regras.raizDoCnpj(fornecedor.cnpj)))
       fornecedor.temPdf = Boolean(fornecedor.bytes) && !fornecedor.jaTemSicaf
       fornecedor.temSimples = Boolean(fornecedor.simplesBytes) && !fornecedor.jaTemConsulta
+      // v0.18.6 (spec sicaf-em-branco): Sicaf/Consulta sem PDF já no processo, deste fornecedor.
+      fornecedor.sicafSemPdf = existentes ? regras.doFornecedor(existentes.nomeados, 'sicaf', fornecedor, existentes.cnpjsDosVizinhos) : null
+      fornecedor.consultaSemPdf = existentes ? regras.doFornecedor(existentes.nomeados, 'consulta', fornecedor, existentes.cnpjsDosVizinhos) : null
+      fornecedor.outraUnidade = [fornecedor.sicafSemPdf, fornecedor.consultaSemPdf].some(achado => achado && achado.outraUnidade)
     }
     const naoLidos = existentes ? existentes.naoLidos : []
     // v0.16.0: Sicaf, Consulta e Anexo em branco depois da última Folha são preenchidos em vez de criar outros.
     const oQue = { sicaf: quais !== 'simples', simples: quais !== 'sicaf', anexo: quais === 'tudo' }
-    const itens = regras.aproveitarEmBranco(regras.documentosParaIncluir(fornecedores, oQue), lida ? lida.documentos : [])
+    const paraIncluir = regras.documentosParaIncluir(fornecedores, oQue)
+    for (const item of paraIncluir) {
+      const fornecedor = fornecedores.find(outro => outro.cnpj === item.cnpj)
+      item.semPdfDoProcesso = item.tipo === 'Sicaf' ? fornecedor.sicafSemPdf : item.tipo === 'Consulta' ? fornecedor.consultaSemPdf : null
+    }
+    const itens = regras.aproveitarEmBranco(paraIncluir, lida ? lida.documentos : [])
     for (const item of itens) {
       const fornecedor = fornecedores.find(outro => outro.cnpj === item.cnpj)
+      if (item.semPdf) continue
       if (item.tipo === 'Sicaf') item.arquivo = { bytes: fornecedor.bytes, nome: fornecedor.nomeDoArquivo || regras.nomeDoArquivo(fornecedor.cnpj) }
       if (item.tipo === 'Consulta') item.arquivo = { bytes: fornecedor.simplesBytes, nome: fornecedor.simplesArquivo }
     }
@@ -265,9 +278,10 @@
         !fornecedor.pediuSimples ? null : fornecedor.simplesErro ? criar('p', { className: 'aviso vermelho', textContent: 'Simples Nacional: ' + fornecedor.simplesErro }) : criar('p', {}, ['PDF do Simples Nacional obtido agora' + (fornecedor.simplesSalvo ? ' (cópia na pasta Downloads). ' : '. '), linkDoPdf(fornecedor.simplesBytes)]),
         fornecedor.jaTemSicaf ? criar('p', { className: 'aviso verde', textContent: 'O Sicaf deste fornecedor já está no processo: não será incluído de novo.' }) : null,
         fornecedor.jaTemConsulta ? criar('p', { className: 'aviso verde', textContent: 'A Consulta do Simples Nacional deste fornecedor já está no processo: não será incluída de novo.' }) : null,
+        fornecedor.outraUnidade ? criar('p', { className: 'aviso vermelho', textContent: `O ${fornecedor.sicafSemPdf && fornecedor.sicafSemPdf.outraUnidade ? 'Sicaf' : 'Consulta do Simples Nacional'} sem PDF desta empresa foi criado por outra unidade; só ela pode anexar o PDF. Nada será incluído para esta empresa.` }) : null,
         ...fornecedor.avisos.map(aviso => criar('p', { className: 'aviso ' + aviso.nivel, textContent: aviso.texto })),
         doFornecedor.length ? criar('p', { className: 'apoio', textContent: 'Será incluído:' }) : null,
-        doFornecedor.length ? criar('ul', {}, doFornecedor.map(item => criar('li', { textContent: nomeDoItem(item) + (item.arquivo ? ' (com o PDF)' : '') + (item.emBranco ? (item.nomeArvore || item.arquivo ? ` – no ${item.tipo} em branco ${item.emBranco.sei}` : ` – já existe em branco (${item.emBranco.sei})`) : '') }))) : null
+        doFornecedor.length ? criar('ul', {}, doFornecedor.map(item => criar('li', { textContent: nomeDoItem(item) + (item.arquivo ? ' (com o PDF)' : '') + (item.semPdf ? ' – sem PDF (complete depois, para manter a ordem)' : '') + (item.emBranco ? (item.nomeArvore || item.arquivo ? ` – no ${item.tipo} em branco ${item.emBranco.sei}` : ` – já existe em branco (${item.emBranco.sei})`) : '') }))) : null
       ])
     })
     // Sicaf ou Consulta do processo que não abriu: não dá para saber de quem é; a pessoa confere.
@@ -382,7 +396,13 @@
     const naoLidos = []
     for (const doc of inicial.sicafs) { const cnpjs = await cnpjsDoDocumento(doc); if (cnpjs) cnpjsDosSicafs[doc.id] = cnpjs; else naoLidos.push(doc) }
     for (const doc of inicial.consultas) { const cnpjs = await cnpjsDoDocumento(doc); if (cnpjs) cnpjsDasConsultas[doc.id] = cnpjs; else naoLidos.push(doc) }
+    // v0.18.6: Sicaf/Consulta sem PDF e com nome, em toda a árvore, com os CNPJs do vizinho que tem PDF.
+    const nomeados = regras.semPdfNomeados(lida.documentos)
+    const cnpjsDosVizinhos = { ...cnpjsDosSicafs, ...cnpjsDasConsultas }
+    for (const { vizinho } of nomeados) if (vizinho && !cnpjsDosVizinhos[vizinho.id]) cnpjsDosVizinhos[vizinho.id] = (await cnpjsDoDocumento(vizinho)) || []
     return {
+      nomeados,
+      cnpjsDosVizinhos,
       inicial,
       cnpjsDosSicafs,
       cnpjsDasConsultas,
@@ -397,15 +417,15 @@
     const lida = seiPedidos.arvoreAberta()
     if (!lida) return null
     const existentes = await jaNoProcesso(lida)
-    const { inicial, cnpjsDosSicafs, cnpjsDasConsultas, cnpjsComSicaf, raizesComConsulta, naoLidos } = existentes
-    if (!inicial.notas.length) return { lida, situacao: inicial, cnpjsComSicaf, raizesComConsulta, naoLidos }
+    const { inicial, cnpjsDosSicafs, cnpjsDasConsultas, cnpjsComSicaf, raizesComConsulta, naoLidos, nomeados } = existentes
+    if (!inicial.notas.length) return { lida, situacao: inicial, cnpjsComSicaf, raizesComConsulta, naoLidos, nomeados }
     const atestes = {}
     for (const doc of inicial.atestes) atestes[doc.id] = await lerAteste(doc)
     // v0.18.2: CNPJ do emitente lido na própria nota (o mesmo que a busca usa).
     const cnpjsDasNotas = {}
     for (const nota of inicial.notas) cnpjsDasNotas[nota.id] = await textoDoDocumento(nota).then(regras.cnpjsDaNota, () => [])
     const situacao = regras.situacaoDoProcesso(lida.documentos, { atestes, cnpjsDosSicafs, cnpjsDasConsultas, cnpjsDasNotas })
-    return { lida, situacao, cnpjsComSicaf, raizesComConsulta, naoLidos }
+    return { lida, situacao, cnpjsComSicaf, raizesComConsulta, naoLidos, nomeados }
   }
 
   // ---------- Aviso na barra ----------
@@ -418,12 +438,28 @@
     try { resultado = await analisar() } catch (erro) { resultado = null }
     if (minhaVez !== vez) return
     atual = resultado
+    avisarSemPdf(resultado ? resultado.nomeados.filter(achado => achado.antesDaFolha) : [])
     const pendentes = resultado ? resultado.situacao.pendentes : []
     if (!pendentes.length) { barra.mostrar(ID, false); return }
     escreverNoBotao(regras.textoDoAviso(pendentes.length) + ' – Buscar')
     botao.title = 'Notas fiscais depois da última Folha de Encaminhamento sem SICAF ou Simples Nacional:\n' +
       pendentes.map(nota => `Nota ${nota.numero || '?'} – ${nota.fornecedor || 'fornecedor não identificado'}`).join('\n')
     barra.mostrar(ID, true)
+  }
+
+  // v0.18.6 (R7, usuário 18/11/2026: só aviso): Sicaf ou Consulta sem PDF antes da última Folha (processo
+  // indo para o financeiro). Só avisa; o PDF é anexado à mão no SEI.
+  const ID_SEM_PDF = 'sicaf-sem-pdf'
+  const botaoSemPdf = barra.botao(ID_SEM_PDF, { texto: '', ordem: 14, aoClicar: () => window.alert(botaoSemPdf.title) })
+  botaoSemPdf.style.color = '#B3261E'
+  botaoSemPdf.style.fontWeight = 'bold'
+  function avisarSemPdf (achados) {
+    if (!achados.length) { barra.mostrar(ID_SEM_PDF, false); return }
+    const nomes = achados.map(achado => (achado.tipo === 'sicaf' ? 'Sicaf' : 'Consulta') + ' sem PDF: ' + (achado.nome || achado.doc.rotulo))
+    botaoSemPdf.lastChild.textContent = ' ' + (nomes.length === 1 ? nomes[0] : `${nomes.length} documentos sem PDF`)
+    botaoSemPdf.title = 'Antes da última Folha de Encaminhamento há documento sem o PDF:\n' + nomes.join('\n') +
+      '\nAnexe o PDF no SEI: clique no documento e em "Alterar Documento Externo".'
+    barra.mostrar(ID_SEM_PDF, true)
   }
 
   // A árvore recarrega sozinha (documento incluído, processo trocado): lê de novo.

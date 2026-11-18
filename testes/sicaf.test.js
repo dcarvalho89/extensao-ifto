@@ -358,3 +358,54 @@ test('buscaComErro: algum CNPJ sem PDF do SICAF ou do Simples', () => {
   assert.equal(sicaf.buscaComErro({ erros: { 11: 'x' }, simplesErros: {} }), true)
   assert.equal(sicaf.buscaComErro({ erros: {}, simplesErros: { 11: 'x' } }), true)
 })
+
+// v0.18.6 (spec sicaf-em-branco): ordem Sicaf → Consulta → Anexo mantida com documento sem PDF.
+test('documentos: SICAF pulado e Simples certo → Sicaf sem PDF antes da Consulta (R1)', () => {
+  const f = { cnpj: 'A', nome: 'CHC', nomeNoSimples: 'CHC SOLUCOES LTDA', temPdf: false, temSimples: true, nomeConsulta: 'Simples Nacional CHC SOLUCOES LTDA', notas: [{ numero: '63', fornecedor: 'CHC' }] }
+  assert.deepEqual(sicaf.documentosParaIncluir([f]).map(d => [d.tipo, d.nomeArvore, Boolean(d.semPdf)]), [
+    ['Sicaf', 'CHC SOLUCOES LTDA', true], ['Consulta', 'Simples Nacional CHC SOLUCOES LTDA', false], ['Anexo', 'Instrumento de Cobrança NF nº 63 CHC', false]
+  ])
+})
+test('documentos: SICAF e Simples pulados → nada da empresa, nem o Anexo (R2)', () => {
+  const f = { cnpj: 'A', nome: 'CHC', temPdf: false, temSimples: false, notas: [{ numero: '63' }] }
+  assert.deepEqual(sicaf.documentosParaIncluir([f]), [])
+})
+test('documentos: Simples pulado → Consulta sem PDF antes do Anexo (R3); sem Anexo, nada em branco', () => {
+  const f = { cnpj: 'A', nomeNoSicaf: 'CHC LTDA.', temPdf: true, temSimples: false, nomeConsulta: 'Simples Nacional CHC LTDA', notas: [{ numero: '63' }] }
+  assert.deepEqual(sicaf.documentosParaIncluir([f]).map(d => d.tipo + (d.semPdf ? '-' : '')), ['Sicaf', 'Consulta-', 'Anexo'])
+  assert.deepEqual(sicaf.documentosParaIncluir([{ ...f, notas: [] }]).map(d => d.tipo + (d.semPdf ? '-' : '')), ['Sicaf'])
+})
+test('documentos: Consulta já no processo e SICAF pulado → Sicaf sem PDF assim mesmo; sem PDF existente não repete', () => {
+  const f = { cnpj: 'A', nome: 'CHC', temPdf: false, temSimples: false, jaTemConsulta: true, notas: [{ numero: '63' }] }
+  assert.deepEqual(sicaf.documentosParaIncluir([f]).map(d => d.tipo + (d.semPdf ? '-' : '')), ['Sicaf-', 'Anexo'])
+  assert.deepEqual(sicaf.documentosParaIncluir([{ ...f, sicafSemPdf: {} }]).map(d => d.tipo), ['Anexo'])
+})
+test('documentos: Sicaf sem PDF de outra unidade → nada da empresa (R8); fora da CGOC sem documento em branco', () => {
+  const f = { cnpj: 'A', nome: 'CHC', temPdf: true, temSimples: true, outraUnidade: true, notas: [{ numero: '63' }] }
+  assert.deepEqual(sicaf.documentosParaIncluir([f]), [])
+  assert.deepEqual(sicaf.documentosParaIncluir([{ cnpj: 'B', temPdf: false, temSimples: true }], { simples: false, anexo: false }), [])
+})
+test('semPdfNomeados e doFornecedor: vizinho com PDF dá o CNPJ; sem ele, o nome; antes da Folha; outra unidade', () => {
+  const documentos = [
+    { id: '1', rotulo: 'Sicaf HM COMERCIO (3380000)', linkAlterar: 'a1' },
+    { id: '2', rotulo: 'Consulta Simples Nacional HM COMERCIO (3380001)', temArquivo: true },
+    { id: '3', rotulo: 'Folha de Encaminhamento 270 (3380002)', feitoNoSei: true },
+    { id: '4', rotulo: 'Sicaf CHC SOLUCOES LTDA (3385000)' },
+    { id: '5', rotulo: 'Anexo Instrumento de Cobrança NF nº 63 CHC (3385001)' },
+    { id: '6', rotulo: 'Sicaf (3385002)', linkAlterar: 'a6' }
+  ]
+  const achados = sicaf.semPdfNomeados(documentos)
+  assert.deepEqual(achados.map(a => [a.doc.id, a.nome, a.vizinho && a.vizinho.id, a.antesDaFolha, a.outraUnidade]), [
+    ['1', 'HM COMERCIO', '2', true, false], ['4', 'CHC SOLUCOES LTDA', null, false, true]
+  ])
+  const vizinhos = { 2: ['11222333000181'] }
+  assert.equal(sicaf.doFornecedor(achados, 'sicaf', { cnpj: '11222333000262', nome: 'OUTRO NOME' }, vizinhos).doc.id, '1')
+  assert.equal(sicaf.doFornecedor(achados, 'sicaf', { cnpj: '99999999000199', nome: 'CHC SOLUÇOES EM SERV. E COM. LTDA' }, vizinhos).doc.id, '4')
+  assert.equal(sicaf.doFornecedor(achados, 'sicaf', { cnpj: '99999999000199', nome: 'HM COMERCIO' }, vizinhos), null)
+})
+test('aproveitarEmBranco: Sicaf sem PDF do fornecedor recebe o PDF e o nome oficial (R5)', () => {
+  const nomeado = { doc: { id: '4', rotulo: 'Sicaf CHC (3385000)', linkAlterar: 'a4' } }
+  const [item] = sicaf.aproveitarEmBranco([{ tipo: 'Sicaf', nomeArvore: 'CHC SOLUCOES LTDA', semPdfDoProcesso: nomeado }], [])
+  assert.deepEqual(item.emBranco, { id: '4', sei: '3385000', linkAlterar: 'a4' })
+  assert.equal(item.nomeArvore, 'CHC SOLUCOES LTDA')
+})
